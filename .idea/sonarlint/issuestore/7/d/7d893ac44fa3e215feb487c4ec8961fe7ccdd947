@@ -1,0 +1,8 @@
+
+W
+java:S1106	"AMove this left curly brace to the beginning of next line of code.(Æñ›¤
+W
+java:S1106"AMove this left curly brace to the beginning of next line of code.(Çµí‘
+R	java:S105"EReplace all tab characters in this file by sequences of white-spaces.
+\
+java:S4604"GExclude from the auto-configuration mechanism the beans you don't need.(ûª¢F

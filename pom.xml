@@ -26,15 +26,15 @@
     <modules>
         <module>discovery-server</module>
         <module>api-gateway</module>
-<!--        <module>smartcart-common</module>-->
+        <module>smartcart-common</module>
 
-<!--        <module>auth-service</module>-->
-<!--        <module>user-service</module>-->
-<!--        <module>product-service</module>-->
-<!--        <module>order-service</module>-->
-<!--        <module>inventory-service</module>-->
-<!--        <module>payment-service</module>-->
-<!--        <module>notification-service</module>-->
+        <module>auth-service</module>
+        <module>user-service</module>
+        <module>product-service</module>
+        <module>order-service</module>
+        <module>inventory-service</module>
+        <module>payment-service</module>
+        <module>notification-service</module>
     </modules>
 
     <!-- ===== GLOBAL PROPERTIES ===== -->
