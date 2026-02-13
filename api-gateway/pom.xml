@@ -12,6 +12,8 @@
 
 	<artifactId>api-gateway</artifactId>
 	<name>api-gateway</name>
+	<packaging>jar</packaging>
+
 
 	<dependencies>
 

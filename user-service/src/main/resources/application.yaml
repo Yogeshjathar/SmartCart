@@ -17,3 +17,13 @@ eureka:
     prefer-ip-address: true
     hostname: ${HOSTNAME:localhost}  # optional for local dev
     instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+  tracing:
+    sampling:
+      probability: 1.0

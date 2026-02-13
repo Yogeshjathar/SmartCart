@@ -13,6 +13,7 @@
 
 	<artifactId>auth-service</artifactId>
 	<name>auth-service</name>
+	<packaging>jar</packaging>
 
 	<dependencies>
 		<dependency>

@@ -13,6 +13,7 @@
 
 	<artifactId>payment-service</artifactId>
 	<name>payment-service</name>
+	<packaging>jar</packaging>
 
 	<dependencies>
 		<dependency>

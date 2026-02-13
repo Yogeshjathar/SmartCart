@@ -13,6 +13,7 @@
 
 	<artifactId>order-service</artifactId>
 	<name>order-service</name>
+	<packaging>jar</packaging>
 
 	<dependencies>
 		<dependency>

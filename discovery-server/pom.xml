@@ -13,6 +13,7 @@
 
 	<artifactId>discovery-server</artifactId>
 	<name>discovery-server</name>
+	<packaging>jar</packaging>
 
 	<dependencies>
 		<!-- Actuator (Production Required) -->

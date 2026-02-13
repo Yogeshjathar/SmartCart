@@ -13,6 +13,7 @@
 
 	<artifactId>inventory-service</artifactId>
 	<name>inventory-service</name>
+	<packaging>jar</packaging>
 
 	<dependencies>
 		<dependency>
