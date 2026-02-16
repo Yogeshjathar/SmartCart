@@ -1,0 +1,19 @@
+package com.smartcart.common.event;
+
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
+
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.UUID;
+
+@Getter
+@SuperBuilder
+public abstract class BaseEvent implements Serializable {
+
+    private final String eventId;
+    private final String eventType;
+    private final Instant occurredAt;
+    private final String traceId;
+    private final String version;
+}

@@ -82,7 +82,6 @@ eureka:
         hostname: ${HOSTNAME:localhost}  # optional for local dev
         instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
 
-
 management:
     endpoints:
         web:
