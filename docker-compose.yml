@@ -1,0 +1,256 @@
+version: "3.9"
+
+networks:
+  smartcart-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
+  kafka_data:
+  grafana_data:
+
+services:
+
+  # ---------------------------
+  # DATABASES
+  # ---------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartcart-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - smartcart-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: smartcart-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - smartcart-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartcart-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - smartcart-network
+
+  # ---------------------------
+  # KAFKA (KRaft mode - modern)
+  # ---------------------------
+
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: smartcart-kafka
+    restart: unless-stopped
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/bitnami
+    networks:
+      - smartcart-network
+
+  # ---------------------------
+  # DISCOVERY
+  # ---------------------------
+
+  discovery-server:
+    build: ./discovery-server
+    container_name: discovery-server
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - postgres
+    networks:
+      - smartcart-network
+
+  # ---------------------------
+  # API GATEWAY
+  # ---------------------------
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  # ---------------------------
+  # BUSINESS SERVICES
+  # ---------------------------
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - postgres
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - postgres
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/product_db
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - mongodb
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inventory_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - postgres
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - postgres
+      - kafka
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - postgres
+      - kafka
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/notification_db
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    depends_on:
+      - mongodb
+      - kafka
+      - discovery-server
+    networks:
+      - smartcart-network
+
+  # ---------------------------
+  # MONITORING
+  # ---------------------------
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartcart-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - smartcart-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: smartcart-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - smartcart-network
