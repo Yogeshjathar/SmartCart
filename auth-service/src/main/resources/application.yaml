@@ -5,6 +5,11 @@ spring:
   application:
     name: auth-service
 
+jwt:
+  secret: myVeryStrongSecretKeyThatShouldBeStoredInVault
+  access-token-expiration: 3600000
+  issuer: auth-service
+
 eureka:
   client:
     service-url:
