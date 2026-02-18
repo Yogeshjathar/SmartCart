@@ -1,7 +1,7 @@
 package com.smartcart.user.controller;
 
+import com.smartcart.common.dto.UserResponse;
 import com.smartcart.user.dto.UserRequest;
-import com.smartcart.user.dto.UserResponse;
 import com.smartcart.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

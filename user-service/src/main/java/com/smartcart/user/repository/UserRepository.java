@@ -1,6 +1,6 @@
 package com.smartcart.user.repository;
 
-import com.smartcart.user.dto.UserResponse;
+import com.smartcart.common.dto.UserResponse;
 import com.smartcart.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

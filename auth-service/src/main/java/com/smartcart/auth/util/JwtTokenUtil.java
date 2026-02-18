@@ -1,7 +1,7 @@
 package com.smartcart.auth.util;
 
 import com.smartcart.auth.config.JwtProperties;
-import com.smartcart.auth.dto.UserResponse;
+import com.smartcart.common.dto.UserResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -22,7 +22,7 @@ public class JwtTokenUtil {
     public String generateAccessToken(UserResponse user) {
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", user.getRoles());
+        claims.put("roles", user.getRole());
         claims.put("token_type", "access");
 
         Date now = new Date();
@@ -30,7 +30,7 @@ public class JwtTokenUtil {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(user.getId())
+                .setSubject(user.getId().toString())
                 .setIssuer(jwtProperties.getIssuer())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
