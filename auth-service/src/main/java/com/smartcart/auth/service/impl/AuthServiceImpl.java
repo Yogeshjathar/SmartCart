@@ -3,13 +3,15 @@ package com.smartcart.auth.service.impl;
 import com.smartcart.auth.client.UserServiceClient;
 import com.smartcart.auth.dto.AuthResponse;
 import com.smartcart.auth.dto.LoginRequest;
-import com.smartcart.auth.dto.UserResponse;
 import com.smartcart.auth.service.AuthService;
 import com.smartcart.auth.util.JwtTokenUtil;
+import com.smartcart.common.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +26,8 @@ public class AuthServiceImpl implements AuthService {
 
         UserResponse user = userServiceClient.getUserByEmail(request.getEmail());
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BadCredentialsException("Invalid credentials");
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
         String token = jwtTokenUtil.generateAccessToken(user);

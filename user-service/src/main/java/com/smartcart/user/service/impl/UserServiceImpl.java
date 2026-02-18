@@ -1,7 +1,7 @@
 package com.smartcart.user.service.impl;
 
+import com.smartcart.common.dto.UserResponse;
 import com.smartcart.user.dto.UserRequest;
-import com.smartcart.user.dto.UserResponse;
 import com.smartcart.user.entity.User;
 import com.smartcart.user.repository.UserRepository;
 import com.smartcart.user.service.UserService;
@@ -48,8 +48,7 @@ public class UserServiceImpl implements UserService {
                 .phoneNo(savedUser.getPhoneNo())
                 .email(savedUser.getEmail())
                 .role(savedUser.getRole())
-                .status(savedUser.getStatus())
-                .createdAt(savedUser.getCreatedAt())
+                .password(savedUser.getPassword())
                 .build();
     }
 

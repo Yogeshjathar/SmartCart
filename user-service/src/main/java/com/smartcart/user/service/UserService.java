@@ -1,7 +1,7 @@
 package com.smartcart.user.service;
 
+import com.smartcart.common.dto.UserResponse;
 import com.smartcart.user.dto.UserRequest;
-import com.smartcart.user.dto.UserResponse;
 
 import java.util.Optional;
 

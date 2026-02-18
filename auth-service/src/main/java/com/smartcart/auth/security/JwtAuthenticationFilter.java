@@ -24,6 +24,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException, IOException {
+        String path = request.getServletPath();
+        // Skip login or public endpoints
+        if (path.equals("/api/v1/auth/login") || path.equals("/api/v1/auth/register")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         final String header = request.getHeader("Authorization");
 
@@ -34,10 +40,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authRequest =
                     new UsernamePasswordAuthenticationToken(null, token);
 
-            Authentication authentication =
-                    jwtAuthenticationProvider.authenticate(authRequest);
+            try {
+                Authentication authentication =
+                        jwtAuthenticationProvider.authenticate(authRequest);
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (Exception ex) {
+                // Optional: log error
+                SecurityContextHolder.clearContext();
+            }
+
         }
 
         filterChain.doFilter(request, response);

@@ -1,13 +1,14 @@
-package com.smartcart.user.dto;
+package com.smartcart.common.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.Value;
 
-import java.time.Instant;
 import java.util.UUID;
 
-@Data
+@Value
 @Builder
+@Data
 public class UserResponse {
 
     private UUID id;
@@ -15,7 +16,6 @@ public class UserResponse {
     private String lastName;
     private String phoneNo;
     private String email;
+    private String password;
     private String role;
-    private String status;
-    private Instant createdAt;
 }
