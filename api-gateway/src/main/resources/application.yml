@@ -1,6 +1,10 @@
 server:
     port: 8080
 
+logging:
+  level:
+    org.springframework.security: DEBUG
+
 spring:
     application:
         name: api-gateway
@@ -67,6 +71,8 @@ eureka:
         prefer-ip-address: true
         hostname: ${HOSTNAME:localhost}  # optional for local dev
         instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+jwt:
+  secret: myVeryStrongSecretKeyThatShouldBeStoredInVault
 
 management:
     endpoints:
