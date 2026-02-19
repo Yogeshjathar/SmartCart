@@ -10,9 +10,12 @@ logging:
     org.springframework.security: DEBUG
 
 jwt:
-  secret: myVeryStrongSecretKeyThatShouldBeStoredInVault
-  access-token-expiration: 3600000
-  issuer: auth-service
+  rsa:
+    issuer: auth-service
+    key-id: my-key-1
+    access-token-expiration: 3600000  # 1 hour
+    private-key-file: classpath:keys/private.pem
+    public-key-file: classpath:keys/public.pem
 
 eureka:
   client:
