@@ -5,6 +5,13 @@ spring:
   application:
     name: product-service
 
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/product_db
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
 eureka:
   client:
     service-url:
@@ -17,3 +24,12 @@ eureka:
     prefer-ip-address: true
     hostname: ${HOSTNAME:localhost}  # optional for local dev
     instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: product-service
