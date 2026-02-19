@@ -7,6 +7,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class InventoryUpdatedEvent extends BaseEvent {
 
-    private final Long productId;
-    private final int quantity;
+    private final String productId;
+    private final Integer previousQuantity;
+    private final Integer updatedQuantity;
+    private final String reason; // ORDER_PLACED, RESTOCK, MANUAL_ADJUSTMENT
 }

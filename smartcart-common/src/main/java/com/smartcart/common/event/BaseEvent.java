@@ -16,4 +16,6 @@ public abstract class BaseEvent implements Serializable {
     private final Instant occurredAt;
     private final String traceId;
     private final String version;
+    private final String correlationId;    // For saga / workflow tracking
+    private final String source;
 }

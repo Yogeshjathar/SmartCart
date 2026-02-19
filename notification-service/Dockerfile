@@ -1,5 +1,4 @@
-# Use official OpenJDK 21 JDK base image
-FROM openjdk:21-jdk
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
