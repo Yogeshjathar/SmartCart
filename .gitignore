@@ -8,6 +8,9 @@ target/
 *.war
 *.ear
 
+#Ignore env variables
+.env
+
 # Ignore sensitive keys
 **/src/main/resources/keys/
 
