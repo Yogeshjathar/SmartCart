@@ -1,6 +1,7 @@
 package com.smartcart.auth.controller;
 
 import com.smartcart.auth.config.RsaKeyLoader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,7 +15,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/.well-known")
 public class JwksController {
-
+    @Value("${jwt.rsa.key-id}")
+    private String keyId;
     private final RsaKeyLoader rsaKeyLoader;
 
     public JwksController(RsaKeyLoader rsaKeyLoader) {
@@ -29,7 +31,7 @@ public class JwksController {
         key.put("kty", "RSA");
         key.put("alg", "RS256");
         key.put("use", "sig");
-        key.put("kid", "smartcart-key");
+        key.put("kid", keyId);
         key.put("n", Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(publicKey.getModulus().toByteArray()));
         key.put("e", Base64.getUrlEncoder().withoutPadding()

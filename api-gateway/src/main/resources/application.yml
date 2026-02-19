@@ -59,6 +59,12 @@ spring:
                   predicates:
                       - Path=/api/v1/notifications/**
 
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            jwk-set-uri: http://localhost:8081/.well-known/jwks.json
+
 eureka:
     client:
         service-url:
@@ -71,8 +77,6 @@ eureka:
         prefer-ip-address: true
         hostname: ${HOSTNAME:localhost}  # optional for local dev
         instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
-jwt:
-  secret: myVeryStrongSecretKeyThatShouldBeStoredInVault
 
 management:
     endpoints:
