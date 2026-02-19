@@ -1,53 +1,56 @@
 package com.smartcart.auth.util;
 
-import com.smartcart.auth.config.JwtProperties;
+import com.smartcart.auth.config.JwtRsaProperties;
+import com.smartcart.auth.config.RsaKeyLoader;
 import com.smartcart.common.dto.UserResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class JwtTokenUtil {
-
-    private final JwtProperties jwtProperties;
+    private final RsaKeyLoader rsaKeyLoader;
+    private final JwtRsaProperties jwtRsaProperties;
 
     public String generateAccessToken(UserResponse user) {
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", user.getRole());
-        claims.put("token_type", "access");
-
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + jwtProperties.getAccessTokenExpiration());
+        Date expiry = new Date(now.getTime() + jwtRsaProperties.getAccessTokenExpiration());
 
         return Jwts.builder()
-                .setClaims(claims)
                 .setSubject(user.getId().toString())
-                .setIssuer(jwtProperties.getIssuer())
+                .claim("roles", user.getRole())
+                .setIssuer(jwtRsaProperties.getIssuer())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .setId(UUID.randomUUID().toString())
-                .signWith(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()))
+                .setHeaderParam("kid", jwtRsaProperties.getKeyId())
+                .signWith(rsaKeyLoader.getPrivateKey(), SignatureAlgorithm.RS256)
                 .compact();
     }
 
     public Claims extractClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(jwtProperties.getSecret().getBytes())
+                .setSigningKey(rsaKeyLoader.getPublicKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
     public boolean isTokenValid(String token) {
-        return !extractClaims(token).getExpiration().before(new Date());
+        return extractClaims(token).getExpiration().after(new Date());
+    }
+
+    public String getUsername(String token) {
+        return extractClaims(token).getSubject();
+    }
+
+    public String getRoles(String token) {
+        return (String) extractClaims(token).get("roles");
     }
 }
