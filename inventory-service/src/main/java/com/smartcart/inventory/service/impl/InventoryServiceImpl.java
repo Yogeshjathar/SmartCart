@@ -23,7 +23,7 @@ import java.time.Instant;
 public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository repository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+//    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final MeterRegistry meterRegistry;
 
     private static final String INVENTORY_TOPIC = "inventory-events";
@@ -52,12 +52,12 @@ public class InventoryServiceImpl implements InventoryService {
         meterRegistry.counter("inventory.add_stock").increment();
 
         // Publish event
-        kafkaTemplate.send(INVENTORY_TOPIC, InventoryUpdatedEvent.builder()
+/*        kafkaTemplate.send(INVENTORY_TOPIC, InventoryUpdatedEvent.builder()
                 .productId(saved.getProductId())
                 .previousQuantity(previous)
                 .updatedQuantity(saved.getAvailableQuantity())
                 .reason("RESTOCK")
-                .build());
+                .build());*/
 
         log.info("Stock added: {} → {}, productId={}", previous, saved.getAvailableQuantity(), saved.getProductId());
 
@@ -87,12 +87,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         meterRegistry.counter("inventory.reserve_stock").increment();
 
-        kafkaTemplate.send(INVENTORY_TOPIC, InventoryUpdatedEvent.builder()
+/*        kafkaTemplate.send(INVENTORY_TOPIC, InventoryUpdatedEvent.builder()
                 .productId(saved.getProductId())
                 .previousQuantity(previous)
                 .updatedQuantity(saved.getAvailableQuantity())
                 .reason("ORDER_PLACED")
-                .build());
+                .build());*/
 
         return saved;
     }
@@ -116,12 +116,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         meterRegistry.counter("inventory.release_stock").increment();
 
-        kafkaTemplate.send(INVENTORY_TOPIC, InventoryUpdatedEvent.builder()
+/*        kafkaTemplate.send(INVENTORY_TOPIC, InventoryUpdatedEvent.builder()
                 .productId(saved.getProductId())
                 .previousQuantity(previous)
                 .updatedQuantity(saved.getAvailableQuantity())
                 .reason("PAYMENT_FAILED")
-                .build());
+                .build());*/
 
         return saved;
     }
@@ -143,12 +143,14 @@ public class InventoryServiceImpl implements InventoryService {
 
         meterRegistry.counter("inventory.confirm_stock").increment();
 
+/*
         kafkaTemplate.send(INVENTORY_TOPIC, InventoryUpdatedEvent.builder()
                 .productId(saved.getProductId())
                 .previousQuantity(inventory.getAvailableQuantity())
                 .updatedQuantity(saved.getAvailableQuantity())
                 .reason("PAYMENT_SUCCESS")
                 .build());
+*/
 
         return saved;
     }

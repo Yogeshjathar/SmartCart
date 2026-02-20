@@ -75,6 +75,13 @@ smartcart-parent
    Payment Service → http://localhost:8086  
    Notification Service → http://localhost:8087
 
+
+4. Monitoring:
+
+   Prometheus → http://localhost:9090
+
+   Grafana → http://localhost:3000
+
 > Note: In production, individual services are not accessed directly. All external traffic flows through the API Gateway.
 ---
 

@@ -15,7 +15,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
-    @PostMapping("/add")
+    @PostMapping
     public ApiResponse<Inventory> addStock(@Valid @RequestBody InventoryRequest request) {
         return ApiResponse.success(inventoryService.addStock(request), "Stock added successfully");
     }
