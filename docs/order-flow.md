@@ -1,5 +1,28 @@
 # SmartCart – Order Flow
 
+## Order Lifecycle
+CREATED
+
+↓
+
+RESERVED (Inventory reserved)
+
+↓
+
+PAYMENT_PENDING
+
+↓
+
+CONFIRMED (Payment success)
+
+↓
+
+COMPLETED (Later stage)
+
+OR
+
+FAILED / CANCELLED
+
 ## Step-by-Step Order Placement
 
 1. User authenticates via Auth Service.
@@ -14,6 +37,48 @@
 10. Notification Service sends confirmation email.
 
 ---
+
+---
+
+# Checkout Flow (SAGA Pattern – Orchestration)
+
+## Step 1: Create Order
+
+Client → Order Service → Create Order
+
+- Order status = `CREATED`
+
+---
+
+## Step 2: Reserve Inventory
+
+Order Service → Inventory Service → Reserve Stock
+
+### If Success:
+- Update order status = `RESERVED`
+
+### If Failure:
+- Update order status = `FAILED`
+- Stop process
+
+---
+
+## Step 3: Initiate Payment
+
+Order Service → Payment Service → Initiate Payment
+- Update order status = `PAYMENT_PENDING`
+
+### If Payment Success:
+- Update order status = `CONFIRMED`
+- Call Inventory Service → Confirm Stock
+- Publish Order Confirmed Event
+- Later → Update status = `COMPLETED`
+
+### If Payment Failure:
+- Call Inventory Service → Release Stock
+- Update order status = `FAILED`
+- Publish Order Failed Event
+- Stop process
 
 ## Failure Scenarios
 

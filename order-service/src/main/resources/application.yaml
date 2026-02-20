@@ -5,6 +5,16 @@ spring:
   application:
     name: order-service
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_db
+    username: postgres
+    password: postgres
+
+    jpa:
+      hibernate:
+        ddl-auto: update
+      show-sql: true
+
 eureka:
   client:
     service-url:
@@ -17,3 +27,9 @@ eureka:
     prefer-ip-address: true
     hostname: ${HOSTNAME:localhost}  # optional for local dev
     instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
