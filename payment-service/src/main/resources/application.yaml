@@ -5,6 +5,24 @@ spring:
   application:
     name: payment-service
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_db
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+#    consumer:
+#      group-id: payment-service-group
+#      auto-offset-reset: earliest
+#    producer:
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
 eureka:
   client:
     service-url:
