@@ -5,33 +5,5 @@ spring:
   application:
     name: payment-service
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/payment_db
-    username: postgres
-    password: postgres
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-
-  kafka:
-    bootstrap-servers: localhost:9092
-#    consumer:
-#      group-id: payment-service-group
-#      auto-offset-reset: earliest
-#    producer:
-#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    fetch-registry: true
-    register-with-eureka: true
-    lease-renewal-interval-in-seconds: 30
-    lease-expiration-duration-in-seconds: 90
-  instance:
-    prefer-ip-address: true
-    hostname: ${HOSTNAME:localhost}  # optional for local dev
-    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}

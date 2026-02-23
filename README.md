@@ -97,6 +97,18 @@ smartcart-parent
 
 ---
 
+### Start SmartCart
+#### To start the SmartCart platform using Docker Compose, run the following command in the terminal:
+```bash
+docker compose -f docker-compose.infra.yml -f docker-compose.services.yml up -d
+```
+
+You can also run using Makefile:
+```bash
+make up
+make logs
+make down
+```
 ## 👨‍💻 Author
 
 SmartCart - Learning-focused enterprise-grade architecture project.

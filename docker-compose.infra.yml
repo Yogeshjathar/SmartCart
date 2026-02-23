@@ -1,0 +1,116 @@
+version: "3.9"
+
+networks:
+  smartcart-network:
+    name: smartcart-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
+  kafka_data:
+  grafana_data:
+
+services:
+
+  # ---------------------------
+  # DATABASES
+  # ---------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartcart-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - smartcart-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: smartcart-mongodb
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT}:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - smartcart-network
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet" ]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartcart-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - smartcart-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      retries: 5
+
+  # ---------------------------
+  # KAFKA (KRaft mode - modern)
+  # ---------------------------
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: smartcart-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:${KAFKA_PORT},CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:${KAFKA_PORT}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    volumes:
+      - kafka_data:/tmp/kraft-combined-logs
+    networks:
+      - smartcart-network
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost ${KAFKA_PORT}" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------
+  # MONITORING
+  # ---------------------------
+
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: smartcart-prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - smartcart-network
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: smartcart-grafana
+    ports:
+      - "${GRAFANA_PORT}:${GRAFANA_PORT}"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - smartcart-network

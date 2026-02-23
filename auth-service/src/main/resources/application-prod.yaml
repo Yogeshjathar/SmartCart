@@ -1,0 +1,36 @@
+server:
+  port: ${AUTH_SERVICE_PORT:8081}  # could override for prod if needed
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:${EUREKA_PORT}/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME:user-service}
+    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"                 # expose all actuator endpoints for monitoring
+      base-path: /actuator
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: when-authorized  # only admins see full health info
+  metrics:
+    export:
+      prometheus:
+        enabled: true                # allow Prometheus scraping
+    enable:
+      all: true                      # enable all default metrics
+  tracing:
+    sampling:
+      probability: 0.1                # trace 10% of requests to reduce overhead
