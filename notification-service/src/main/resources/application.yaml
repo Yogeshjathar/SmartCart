@@ -5,6 +5,16 @@ spring:
   application:
     name: notification-service
 
+  data:
+    mongodb:
+      uri: mongodb://mongo:27017/notification_db
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+
 eureka:
   client:
     service-url:
