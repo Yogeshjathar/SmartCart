@@ -14,4 +14,5 @@ import java.util.UUID;
 public class PaymentFailedEvent {
 
     private UUID orderId;
+    private String userId;
 }
