@@ -17,7 +17,8 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
+    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
     private UUID id;
 
     @Column(nullable = false, length = 50)
@@ -41,7 +42,7 @@ public class User {
     @Column(nullable = false)
     private String status;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, columnDefinition = "timestamptz")
     private Instant createdAt;
 
     @PrePersist
