@@ -75,6 +75,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
       discovery-server:
         condition: service_healthy
     networks:
