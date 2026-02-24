@@ -10,5 +10,5 @@ public class UserCreatedEvent extends BaseEvent {
     private final String userId;
     private final String email;
     private final String role;
-    private final boolean active;
+    private final String status;
 }

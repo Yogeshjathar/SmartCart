@@ -9,7 +9,7 @@ import java.util.UUID;
 @Value
 @Builder
 @Data
-public class UserResponse {
+public class UserAuthDetails  {
 
     private UUID id;
     private String firstName;
@@ -18,4 +18,5 @@ public class UserResponse {
     private String email;
     private String password;
     private String role;
+    private String status;
 }

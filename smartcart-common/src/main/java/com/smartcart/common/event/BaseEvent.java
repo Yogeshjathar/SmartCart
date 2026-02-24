@@ -13,6 +13,8 @@ public abstract class BaseEvent implements Serializable {
 
     private final String eventId;
     private final String eventType;
+    private final String aggregateId;     // userId / orderId
+    private final AggregateType aggregateType;
     private final Instant occurredAt;
     private final String traceId;
     private final String version;

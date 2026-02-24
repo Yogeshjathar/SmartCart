@@ -15,6 +15,11 @@ spring:
       ddl-auto: validate    # prod: validate schema only
     show-sql: false         # prod: disable SQL logging
 
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 eureka:
   client:
     service-url:

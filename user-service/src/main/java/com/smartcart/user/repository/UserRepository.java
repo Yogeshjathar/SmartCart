@@ -1,6 +1,6 @@
 package com.smartcart.user.repository;
 
-import com.smartcart.common.dto.UserResponse;
+import com.smartcart.common.dto.UserAuthDetails;
 import com.smartcart.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    Optional<UserResponse> findByEmail(String email);
+    Optional<UserAuthDetails> findByEmail(String email);
 
     boolean existsByEmail(String email);
 
