@@ -75,6 +75,13 @@ smartcart-parent
    Payment Service → http://localhost:8086  
    Notification Service → http://localhost:8087
 
+
+4. Monitoring:
+
+   Prometheus → http://localhost:9090
+
+   Grafana → http://localhost:3000
+
 > Note: In production, individual services are not accessed directly. All external traffic flows through the API Gateway.
 ---
 
@@ -90,6 +97,18 @@ smartcart-parent
 
 ---
 
+### Start SmartCart
+#### To start the SmartCart platform using Docker Compose, run the following command in the terminal:
+```bash
+docker compose -f docker-compose.infra.yml -f docker-compose.services.yml up -d
+```
+
+You can also run using Makefile:
+```bash
+make up
+make logs
+make down
+```
 ## 👨‍💻 Author
 
 SmartCart - Learning-focused enterprise-grade architecture project.

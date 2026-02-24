@@ -1,0 +1,54 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/inventory_db
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME:inventory-service} # optional for local dev
+    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"                 # expose all actuator endpoints for monitoring
+      base-path: /actuator
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: when-authorized  # only admins see full health info
+  metrics:
+    export:
+      prometheus:
+        enabled: true                # allow Prometheus scraping
+    enable:
+      all: true                      # enable all default metrics
+  tracing:
+    sampling:
+      probability: 0.1                # trace 10% of requests to reduce overhead
+
+logging:
+  level:
+    root: WARN                 # production logs
+    org.springframework: WARN
+    com.smartcart: INFO         # your app packages

@@ -17,13 +17,7 @@ with the following characteristics:
 
 ## 2. High-Level Flow
 
-Client
-↓
-API Gateway
-↓
-Discovery Server
-↓
-Microservices:
+Client → API Gateway → Discovery Server → Microservices:
 - Auth Service
 - User Service
 - Product Service
@@ -31,6 +25,13 @@ Microservices:
 - Order Service
 - Payment Service
 - Notification Service
+
+Responsibilities:
+- Order is the orchestrator 
+- Inventory handles stock 
+- Payment handles transactions 
+- Notification handles async communication 
+- Product handles catalog
 
 ---
 

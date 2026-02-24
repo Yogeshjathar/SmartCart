@@ -7,6 +7,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class UserCreatedEvent extends BaseEvent {
 
-    private final Long userId;
+    private final String userId;
     private final String email;
+    private final String role;
+    private final String status;
 }

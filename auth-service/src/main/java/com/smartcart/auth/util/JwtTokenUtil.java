@@ -2,7 +2,7 @@ package com.smartcart.auth.util;
 
 import com.smartcart.auth.config.JwtRsaProperties;
 import com.smartcart.auth.config.RsaKeyLoader;
-import com.smartcart.common.dto.UserResponse;
+import com.smartcart.common.dto.UserAuthDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -18,7 +18,7 @@ public class JwtTokenUtil {
     private final RsaKeyLoader rsaKeyLoader;
     private final JwtRsaProperties jwtRsaProperties;
 
-    public String generateAccessToken(UserResponse user) {
+    public String generateAccessToken(UserAuthDetails user) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtRsaProperties.getAccessTokenExpiration());
 

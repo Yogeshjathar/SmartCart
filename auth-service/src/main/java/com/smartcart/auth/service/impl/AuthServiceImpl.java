@@ -5,10 +5,9 @@ import com.smartcart.auth.dto.AuthResponse;
 import com.smartcart.auth.dto.LoginRequest;
 import com.smartcart.auth.service.AuthService;
 import com.smartcart.auth.util.JwtTokenUtil;
-import com.smartcart.common.dto.UserResponse;
+import com.smartcart.common.dto.UserAuthDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,7 +23,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
 
-        UserResponse user = userServiceClient.getUserByEmail(request.getEmail());
+        UserAuthDetails user = userServiceClient.getUserByEmail(request.getEmail());
 
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");

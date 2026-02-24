@@ -1,0 +1,84 @@
+server:
+  port: ${GATEWAY_PORT:8080}
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false   # Explicit routing (recommended in dev/prod)
+
+      routes:
+
+        # ================= AUTH SERVICE =================
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/**
+
+        # ================= USER SERVICE =================
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+
+        # ================= PRODUCT SERVICE =================
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/v1/products/**
+
+        # ================= ORDER SERVICE =================
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/v1/orders/**
+
+        # ================= INVENTORY SERVICE =================
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/api/v1/inventory/**
+
+        # ================= PAYMENT SERVICE =================
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v1/payments/**
+
+        # ================= NOTIFICATION SERVICE =================
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/v1/notifications/**
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8081/.well-known/jwks.json
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME:localhost}
+    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus   # dev monitoring
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0

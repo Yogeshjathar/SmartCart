@@ -1,0 +1,26 @@
+server:
+  port: ${AUTH_SERVICE_PORT:8081}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+  instance:
+    hostname: ${HOSTNAME:localhost}  # local dev
+    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus   # dev monitoring
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
