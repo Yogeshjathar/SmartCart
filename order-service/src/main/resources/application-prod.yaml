@@ -15,6 +15,12 @@ spring:
       ddl-auto: validate   # prod: validate schema only
     show-sql: false        # prod: don’t show SQL
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth-service:8081/.well-known/jwks.json
+
   kafka:
     bootstrap-servers: kafka:${KAFKA_PORT}  # production Kafka bootstrap server
 

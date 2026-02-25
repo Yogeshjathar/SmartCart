@@ -9,6 +9,12 @@ spring:
     mongodb:
       uri: mongodb://mongodb:27017/notification_db  # use internal service name in prod
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth-service:8081/.well-known/jwks.json
+
   kafka:
     bootstrap-servers: kafka:${KAFKA_PORT}  # production Kafka bootstrap server
     consumer:

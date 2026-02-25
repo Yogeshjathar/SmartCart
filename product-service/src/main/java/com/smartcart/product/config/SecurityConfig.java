@@ -1,4 +1,4 @@
-package com.smartcart.user.config;
+package com.smartcart.product.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,8 +15,6 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/users/register").permitAll()
-                        .requestMatchers("/api/v1/users").permitAll()  // internal call
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )

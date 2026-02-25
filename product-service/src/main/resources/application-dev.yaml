@@ -9,6 +9,12 @@ spring:
     mongodb:
       uri: mongodb://localhost:27017/product_db  # local dev
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8081/.well-known/jwks.json
+
   kafka:
     bootstrap-servers: localhost:9092           # dev Kafka
 

@@ -10,6 +10,12 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth-service:8081/.well-known/jwks.json
+
   kafka:
     bootstrap-servers: kafka:9092
 
