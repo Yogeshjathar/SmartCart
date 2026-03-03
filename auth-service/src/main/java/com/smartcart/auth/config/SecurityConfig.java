@@ -32,6 +32,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/login", "/.well-known/jwks.json").permitAll()
+                    .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/seller/**").hasRole("SELLER")
                 .requestMatchers("/delivery/**").hasRole("DELIVERY")

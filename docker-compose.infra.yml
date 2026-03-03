@@ -96,6 +96,28 @@ services:
       timeout: 5s
       retries: 5
 
+  akhq:
+    image: tchiotludo/akhq:0.24.0
+    container_name: smartcart-akhq
+    restart: unless-stopped
+    ports:
+      - "9191:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          server:
+            access-log:
+              enabled: false
+          connections:
+            smartcart:
+              properties:
+                bootstrap.servers: "kafka:29092"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smartcart-network
+
   # ---------------------------
   # MONITORING
   # ---------------------------
@@ -104,9 +126,9 @@ services:
     image: prom/prometheus:v2.48.1
     container_name: smartcart-prometheus
     ports:
-      - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
+      - "${PROMETHEUS_PORT}:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${PROM_CONFIG_FILE}:/etc/prometheus/prometheus.yml
     networks:
       - smartcart-network
 
