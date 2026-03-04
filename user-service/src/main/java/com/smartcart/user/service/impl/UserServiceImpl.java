@@ -3,6 +3,7 @@ package com.smartcart.user.service.impl;
 import com.smartcart.common.dto.UserAuthDetails;
 import com.smartcart.common.event.AggregateType;
 import com.smartcart.common.event.UserCreatedEvent;
+import com.smartcart.common.exception.ConflictException;
 import com.smartcart.common.exception.ErrorCode;
 import com.smartcart.common.exception.ResourceNotFoundException;
 import com.smartcart.common.response.ApiResponse;
@@ -35,18 +36,12 @@ public class UserServiceImpl implements UserService {
 
         // ❌ Email exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            return ApiResponse.failure(
-                    "Email already exists",
-                    "DUPLICATE_RESOURCE"
-            );
+            throw new ConflictException("Email already exists");
         }
 
         // ❌ Phone exists
         if (userRepository.existsByPhoneNo(request.getPhoneNo())) {
-            return ApiResponse.failure(
-                    "Phone number already exists",
-                    "DUPLICATE_RESOURCE"
-            );
+            throw new ConflictException("Phone number already exists");
         }
 
         User user = User.builder()
