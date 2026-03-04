@@ -6,6 +6,8 @@ import com.smartcart.product.entity.Product;
 import com.smartcart.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,10 +20,13 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    public ApiResponse<Product> create(@Valid @RequestBody CreateProductRequest request) {
-        return ApiResponse.success(
-                productService.createProduct(request),
-                "Product created successfully");
+    public ResponseEntity<ApiResponse<Product>> create(@Valid @RequestBody CreateProductRequest request) {
+
+        Product product = productService.createProduct(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.success(product, "Product created successfully")
+                );
     }
 
     @GetMapping("/{id}")
