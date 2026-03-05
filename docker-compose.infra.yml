@@ -141,3 +141,16 @@ services:
       - grafana_data:/var/lib/grafana
     networks:
       - smartcart-network
+
+  # ---------------------------
+  # DISTRIBUTED TRACING
+  # ---------------------------
+
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: smartcart-zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    networks:
+      - smartcart-network
