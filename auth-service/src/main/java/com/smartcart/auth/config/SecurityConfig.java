@@ -2,6 +2,7 @@ package com.smartcart.auth.config;
 
 import com.smartcart.auth.security.JwtAuthenticationEntryPoint;
 import com.smartcart.auth.security.JwtAuthenticationFilter;
+import com.smartcart.auth.security.JwtAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,26 +21,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final JwtAuthenticationFilter jwtFilter;
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/login", "/.well-known/jwks.json").permitAll()
-                    .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/seller/**").hasRole("SELLER")
-                .requestMatchers("/delivery/**").hasRole("DELIVERY")
-                .anyRequest().authenticated()
-            )
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/login", "/.well-known/jwks.json").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/seller/**").hasRole("SELLER")
+                        .requestMatchers("/delivery/**").hasRole("DELIVERY")
+                        .anyRequest().authenticated()
+                )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                // create filter here instead of using @Bean
+                .addFilterBefore(new JwtAuthenticationFilter(jwtAuthenticationProvider),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
