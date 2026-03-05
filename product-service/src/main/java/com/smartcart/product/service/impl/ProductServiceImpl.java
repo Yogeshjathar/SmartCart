@@ -38,8 +38,10 @@ public class ProductServiceImpl implements ProductService {
         meterRegistry.counter("product.create.request").increment();
 
         if (repository.existsByNameAndBrand(request.getName(), request.getBrand())) {
-            log.warn("Duplicate product detected: {}", request.getName());
-            throw new ConflictException("Product already exists");
+            log.warn("Duplicate product detected: {} - {}", request.getName(), request.getBrand());
+            throw new ConflictException(
+                    String.format("Product already exists: %s (Brand: %s)", request.getName(), request.getBrand())
+            );
         }
 
         Product product = Product.builder()
@@ -60,6 +62,16 @@ public class ProductServiceImpl implements ProductService {
 
         meterRegistry.counter("product.create.success").increment();
 
+        // Optional: Publish Kafka event
+//        kafkaTemplate.send(INVENTORY_TOPIC, ProductCreatedEvent.builder()
+//                .productId(saved.getId())
+//                .name(saved.getName())
+//                .brand(saved.getBrand())
+//                .price(saved.getPrice())
+//                .status(saved.getStatus())
+//                .createdAt(saved.getCreatedAt())
+//                .build());
+
         return saved;
     }
 
@@ -72,7 +84,7 @@ public class ProductServiceImpl implements ProductService {
 
         return repository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Product not found id={}", id);
+                    log.error("Product not found id={}, traceId={}", id, MDC.get("traceId"));
                     meterRegistry.counter("product.fetch.notfound").increment();
                     return new ResourceNotFoundException(
                             "Product not found",

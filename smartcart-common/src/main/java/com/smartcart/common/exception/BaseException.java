@@ -9,6 +9,11 @@ public abstract class BaseException extends RuntimeException {
     private final ErrorCode errorCode;
     private final HttpStatus httpStatus;
 
+    protected BaseException(String message, ErrorCode errorCode){
+        super(message);
+        this.errorCode = errorCode;
+        this.httpStatus = errorCode.getHttpStatus();
+    }
     protected BaseException(String message, ErrorCode errorCode, HttpStatus httpStatus) {
         super(message);
         this.errorCode = errorCode;

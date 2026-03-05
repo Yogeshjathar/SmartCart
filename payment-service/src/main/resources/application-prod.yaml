@@ -15,6 +15,12 @@ spring:
       ddl-auto: validate    # prod: validate schema only
     show-sql: false         # prod: disable SQL logging
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth-service:8081/.well-known/jwks.json
+
   kafka:
     bootstrap-servers: kafka:${KAFKA_PORT}   # prod Kafka
 
@@ -51,6 +57,9 @@ management:
   tracing:
     sampling:
       probability: 0.1                # trace 10% of requests to reduce overhead
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
 
 logging:
   level:
