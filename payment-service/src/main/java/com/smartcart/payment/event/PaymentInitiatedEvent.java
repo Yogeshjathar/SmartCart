@@ -10,7 +10,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentInitiatedEvent {
-
+    private String userId;
     private UUID orderId;
     private BigDecimal amount;
     private String currency;

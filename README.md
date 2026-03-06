@@ -23,14 +23,17 @@ SmartCart follows a distributed microservices architecture:
 
 ## ⚙️ Tech Stack
 
-- Java 17+
+- Java 21
 - Spring Boot
 - Spring Cloud (Eureka, OpenFeign)
 - Spring Security
 - Maven (Multi-module)
 - Lombok
 - Micrometer + Prometheus
-- Docker (Planned)
+- Grafana
+- OpenTelemetry + zipkin
+- JUnit + Mockito
+- Docker
 - Kubernetes (Future-ready)
 
 ---
@@ -78,9 +81,9 @@ smartcart-parent
 
 4. Monitoring:
 
-   Prometheus → http://localhost:9090
-
-   Grafana → http://localhost:3000
+   - Prometheus → http://localhost:9090
+   - Grafana → http://localhost:3000
+   - zipkin → http://localhost:9411
 
 > Note: In production, individual services are not accessed directly. All external traffic flows through the API Gateway.
 ---

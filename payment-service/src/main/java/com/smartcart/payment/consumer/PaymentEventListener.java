@@ -53,6 +53,7 @@ public class PaymentEventListener {
             payment.setStatus(PaymentStatus.SUCCESS);
             kafkaTemplate.send("payment-success-topic",
                     PaymentSuccessEvent.builder()
+                            .userId(event.getUserId())
                             .orderId(event.getOrderId())
                             .build());
         } else {
