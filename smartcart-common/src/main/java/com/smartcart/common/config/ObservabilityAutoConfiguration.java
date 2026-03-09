@@ -14,25 +14,25 @@ import org.springframework.context.annotation.Bean;
 public class ObservabilityAutoConfiguration {
 
     @Bean
-    @ConditionalOnBean(Tracer.class)
+//    @ConditionalOnBean(Tracer.class)
     public LoggingAspect loggingAspect(Tracer tracer) { return new LoggingAspect(tracer); }
 
     @Bean
     public ExceptionLoggingAspect exceptionLoggingAspect() { return new ExceptionLoggingAspect(); }
 
     @Bean
-    @ConditionalOnBean(Tracer.class)
+//    @ConditionalOnBean(Tracer.class)
     public KafkaLoggingAspect kafkaLoggingAspect(Tracer tracer) { return new KafkaLoggingAspect(tracer); }
 
     @Bean
     public SecurityAuditAspect securityAuditAspect() { return new SecurityAuditAspect(); }
 
     @Bean
-    @ConditionalOnBean(Tracer.class)
+//    @ConditionalOnBean(Tracer.class)
     public Filter traceFilter(Tracer tracer) { return new TraceFilter(tracer); }
 
     @Bean
-    @ConditionalOnClass(name = "feign.RequestInterceptor")
+//    @ConditionalOnClass(name = "feign.RequestInterceptor")
     public FeignTraceConfig feignTraceConfig() {
         return new FeignTraceConfig();
     }
