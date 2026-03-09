@@ -60,11 +60,12 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://discovery-server:${EUREKA_PORT}/eureka/
+      defaultZone: http://discovery-server:${EUREKA_PORT:8761}/eureka/
     fetch-registry: true
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
+
   instance:
     prefer-ip-address: true
     hostname: ${HOSTNAME:api-gateway}
@@ -74,7 +75,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"                 # expose all actuator endpoints for monitoring
+        include: health,info,prometheus             # expose all actuator endpoints for monitoring
       base-path: /actuator
   endpoint:
     prometheus:

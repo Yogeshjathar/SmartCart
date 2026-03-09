@@ -1,3 +1,6 @@
+server:
+  port: 8084
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/inventory_db
@@ -27,6 +30,7 @@ eureka:
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+
   instance:
     prefer-ip-address: true
     hostname: localhost  # optional for local dev
@@ -36,13 +40,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus   # dev monitoring
+        include: health,info,prometheus.metrics,loggers  # dev monitoring
+
   endpoint:
     health:
       show-details: always
+
   tracing:
     sampling:
       probability: 1.0
+
   zipkin:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans
@@ -52,3 +59,12 @@ ogging:
     root: INFO                  # show everything in dev
     org.springframework: INFO
     com.smartcart: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+swagger:
+  server-url: http://localhost:${server.port}

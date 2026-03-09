@@ -4,36 +4,49 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://discovery-server:${EUREKA_PORT}/eureka/
+      defaultZone: http://discovery-server:${EUREKA_PORT:8761}/eureka/
     fetch-registry: true
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
+
   instance:
     prefer-ip-address: true
-    hostname: ${HOSTNAME:user-service}
+    hostname: ${HOSTNAME:auth-service}
     instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}:${spring.profiles.active}
 
 management:
   endpoints:
     web:
       exposure:
-        include: "*"                 # expose all actuator endpoints for monitoring
-      base-path: /actuator
+        include: health,info,prometheus               # expose all actuator endpoints for monitoring
+
   endpoint:
     prometheus:
       enabled: true
     health:
       show-details: when-authorized  # only admins see full health info
+
   metrics:
     export:
       prometheus:
         enabled: true                # allow Prometheus scraping
     enable:
       all: true                      # enable all default metrics
+
   tracing:
     sampling:
       probability: 0.1                # trace 10% of requests to reduce overhead
+
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+swagger:
+  server-url: https://api.smartcart.com
