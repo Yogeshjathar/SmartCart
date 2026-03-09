@@ -54,6 +54,20 @@ smartcart-parent
 
 ---
 
+## Features include:
+- User registration and authentication (JWT)
+- Product catalog management
+- Inventory tracking
+- Order processing
+- Payment integration (mocked)
+- Notification system (email/SMS)
+- Centralized API documentation (Swagger)
+- Service discovery (Eureka)
+- Inter-service communication (OpenFeign)
+- Monitoring and tracing (Micrometer, Prometheus, Grafana, OpenTelemetry)
+
+---
+
 ## 🚀 Running Locally
 
 1. Build all modules:
@@ -88,15 +102,40 @@ smartcart-parent
 > Note: In production, individual services are not accessed directly. All external traffic flows through the API Gateway.
 ---
 
-## 📌 Future Improvements
+# SmartCart API Documentation
 
-- Distributed tracing
-- Centralized logging
-- CI/CD pipeline
-- Docker Compose setup
-- Kubernetes deployment
-- Resilience4j circuit breaker
-- API documentation (OpenAPI)
+## Overview
+
+SmartCart is built using a **microservices architecture**, where each service exposes its own REST APIs.  
+To simplify API discovery and improve the developer experience, we implemented **centralized API documentation using Swagger (OpenAPI)**.
+
+Instead of hosting Swagger UI separately for every service, all API specifications are **aggregated through the API Gateway**, allowing developers to access documentation from a **single interface**.
+
+This approach is widely used in **large-scale distributed systems** to manage APIs efficiently.
+
+---
+
+## API Documentation Strategy
+
+Each microservice generates its own **OpenAPI specification**, which is then aggregated by the **API Gateway**.
+
+### API Definitions
+
+Each service exposes its OpenAPI specification through the API Gateway.
+
+| Service | OpenAPI Endpoint |
+|--------|------------------|
+| Auth Service | http://localhost:8080/v3/api-docs/auth-service |
+| User Service | http://localhost:8080/v3/api-docs/user-service |
+| Product Service | http://localhost:8080/v3/api-docs/product-service |
+| Order Service | http://localhost:8080/v3/api-docs/order-service |
+| Inventory Service | http://localhost:8080/v3/api-docs/inventory-service |
+| Payment Service | http://localhost:8080/v3/api-docs/payment-service |
+| Notification Service | http://localhost:8080/v3/api-docs/notification-service |
+
+### Swagger UI
+
+Access the unified Swagger UI: http://localhost:8080/swagger-ui.html
 
 ---
 
@@ -112,6 +151,19 @@ make up
 make logs
 make down
 ```
+### Then to start all services without infrastructure components (like Prometheus, Grafana, zipkin), run:
+```bash
+docker compose -f docker-compose.services.yml up -d
+```
+
+---
+## 📌 Future Improvements
+
+- Centralized logging
+- CI/CD pipeline
+- Kubernetes deployment
+- Resilience4j circuit breaker, rate limiting, and retry mechanisms
+
 ## 👨‍💻 Author
 
 SmartCart - Learning-focused enterprise-grade architecture project.

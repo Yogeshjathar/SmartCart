@@ -1,5 +1,5 @@
 server:
-  port: ${GATEWAY_PORT:8080}
+  port: 8080
 
 spring:
   cloud:
@@ -14,7 +14,9 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/api/v1/auth/**
+            - Path=/api/v1/auth/**,/v3/api-docs/auth-service
+          filters:
+            - RewritePath=/v3/api-docs/auth-service,/v3/api-docs
 
         # ================= USER SERVICE =================
         - id: user-service
@@ -52,11 +54,91 @@ spring:
           predicates:
             - Path=/api/v1/notifications/**
 
+        # ================= SWAGGER ROUTES =================
+
+        - id: auth-service-docs
+          uri: lb://auth-service
+          predicates:
+            - Path=/v3/api-docs/auth-service
+          filters:
+            - RewritePath=/v3/api-docs/auth-service,/v3/api-docs
+
+        - id: user-service-docs
+          uri: lb://user-service
+          predicates:
+            - Path=/v3/api-docs/user-service
+          filters:
+            - RewritePath=/v3/api-docs/user-service,/v3/api-docs
+
+        - id: product-service-docs
+          uri: lb://product-service
+          predicates:
+            - Path=/v3/api-docs/product-service
+          filters:
+            - RewritePath=/v3/api-docs/product-service,/v3/api-docs
+
+        - id: order-service-docs
+          uri: lb://order-service
+          predicates:
+            - Path=/v3/api-docs/order-service
+          filters:
+            - RewritePath=/v3/api-docs/order-service,/v3/api-docs
+
+        - id: inventory-service-docs
+          uri: lb://inventory-service
+          predicates:
+            - Path=/v3/api-docs/inventory-service
+          filters:
+            - RewritePath=/v3/api-docs/inventory-service,/v3/api-docs
+
+        - id: payment-service-docs
+          uri: lb://payment-service
+          predicates:
+            - Path=/v3/api-docs/payment-service
+          filters:
+            - RewritePath=/v3/api-docs/payment-service,/v3/api-docs
+
+        - id: notification-service-docs
+          uri: lb://notification-service
+          predicates:
+            - Path=/v3/api-docs/notification-service
+          filters:
+            - RewritePath=/v3/api-docs/notification-service,/v3/api-docs
+
   security:
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8081/.well-known/jwks.json
+
+# ================= SWAGGER AGGREGATION =================
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+
+      - name: Auth Service
+        url: /v3/api-docs/auth-service
+
+      - name: User Service
+        url: /v3/api-docs/user-service
+
+      - name: Product Service
+        url: /v3/api-docs/product-service
+
+      - name: Order Service
+        url: /v3/api-docs/order-service
+
+      - name: Inventory Service
+        url: /v3/api-docs/inventory-service
+
+      - name: Payment Service
+        url: /v3/api-docs/payment-service
+
+      - name: Notification Service
+        url: /v3/api-docs/notification-service
 
 eureka:
   client:
@@ -66,6 +148,7 @@ eureka:
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+
   instance:
     prefer-ip-address: true
     hostname: ${HOSTNAME:localhost}
@@ -75,13 +158,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus   # dev monitoring
+        include: health,info,prometheus,metrics,loggers   # dev monitoring
+
   endpoint:
     health:
       show-details: always
+
   tracing:
     sampling:
       probability: 1.0
+
   zipkin:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans

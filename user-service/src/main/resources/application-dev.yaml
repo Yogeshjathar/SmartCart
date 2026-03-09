@@ -1,10 +1,7 @@
 server:
-  port: ${USER_SERVICE_PORT:8082}
+  port: 8082
 
 spring:
-  application:
-    name: user-service
-
   datasource:
     url: jdbc:postgresql://localhost:5432/user_db   # local dev
     username: postgres
@@ -27,7 +24,6 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
       acks: all
       retries: 10
       properties:
@@ -46,6 +42,7 @@ eureka:
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+
   instance:
     prefer-ip-address: true
     hostname: ${HOSTNAME:localhost}
@@ -55,13 +52,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus   # dev monitoring
+        include: health,info,prometheus,metrics,loggers   # dev monitoring
+
   endpoint:
     health:
       show-details: always
+
   tracing:
     sampling:
       probability: 1.0
+
   zipkin:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans
@@ -71,3 +71,12 @@ logging:
     root: INFO
     org.springframework: INFO
     com.smartcart.user: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+swagger:
+  server-url: http://localhost:${server.port}

@@ -2,9 +2,6 @@ server:
   port: ${USER_SERVICE_PORT:8082}
 
 spring:
-  application:
-    name: user-service
-
   datasource:
     url: jdbc:postgresql://postgres:5432/user_db   # Docker container for prod
     username: ${POSTGRES_USER:postgres}
@@ -26,24 +23,25 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 10
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        delivery.timeout.ms: 120000
+        request.timeout.ms: 30000
+        linger.ms: 5
+        batch.size: 16384
 
-        acks: all
-        retries: 10
-        properties:
-          enable.idempotence: true
-          max.in.flight.requests.per.connection: 5
-          delivery.timeout.ms: 120000
-          request.timeout.ms: 30000
-          linger.ms: 5
-          batch.size: 16384
 eureka:
   client:
     service-url:
-      defaultZone: http://discovery-server:${EUREKA_PORT}/eureka/
+      defaultZone: http://discovery-server:${EUREKA_PORT:8761}/eureka/
     fetch-registry: true
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
+
   instance:
     prefer-ip-address: true
     hostname: ${HOSTNAME:user-service}
@@ -53,22 +51,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"                 # expose all actuator endpoints for monitoring
-      base-path: /actuator
+        include: health,info,prometheus              # expose all actuator endpoints for monitoring
+
   endpoint:
     prometheus:
       enabled: true
     health:
       show-details: when-authorized  # only admins see full health info
+
   metrics:
     export:
       prometheus:
         enabled: true                # allow Prometheus scraping
     enable:
       all: true                      # enable all default metrics
+
   tracing:
     sampling:
       probability: 0.1                # trace 10% of requests to reduce overhead
+
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
@@ -78,3 +79,12 @@ logging:
     root: WARN
     org.springframework: WARN
     com.smartcart.user: INFO
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+swagger:
+  server-url: http://api.smartcart.com

@@ -1,2 +1,3 @@
 com.smartcart.common.exception.GlobalExceptionHandler
 com.smartcart.common.config.ObservabilityAutoConfiguration
+com.smartcart.common.config.SwaggerConfig
