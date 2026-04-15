@@ -107,9 +107,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${INVENTORY_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       EUREKA_SERVER_URL: http://discovery-server:${EUREKA_PORT}/eureka/
     depends_on:
       postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
@@ -125,7 +128,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${ORDER_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:${KAFKA_PORT}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       EUREKA_SERVER_URL: http://discovery-server:${EUREKA_PORT}/eureka/
     depends_on:
       postgres:
@@ -146,7 +149,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${PAYMENT_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:${KAFKA_PORT}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       EUREKA_SERVER_URL: http://discovery-server:${EUREKA_PORT}/eureka/
     depends_on:
       postgres:
@@ -165,7 +168,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/${NOTIFICATION_DB}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:${KAFKA_PORT}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       EUREKA_SERVER_URL: http://discovery-server:${EUREKA_PORT}/eureka/
     depends_on:
       mongodb:

@@ -107,6 +107,10 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Inventory not found for productId: " + productId, ErrorCode.PRODUCT_NOT_FOUND));
 
+        if (inventory.getReservedQuantity() < quantity) {
+            throw new RuntimeException("Insufficient reserved stock for productId: " + productId);
+        }
+
         int previous = inventory.getAvailableQuantity();
         inventory.setAvailableQuantity(inventory.getAvailableQuantity() + quantity);
         inventory.setReservedQuantity(inventory.getReservedQuantity() - quantity);
@@ -135,6 +139,10 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory inventory = repository.findByProductId(productId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Inventory not found for productId: " + productId, ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (inventory.getReservedQuantity() < quantity) {
+            throw new RuntimeException("Insufficient reserved stock for productId: " + productId);
+        }
 
         inventory.setReservedQuantity(inventory.getReservedQuantity() - quantity);
         inventory.setLastUpdated(Instant.now());

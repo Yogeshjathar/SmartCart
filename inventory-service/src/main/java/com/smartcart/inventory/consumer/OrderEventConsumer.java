@@ -1,5 +1,6 @@
 package com.smartcart.inventory.consumer;
 
+import com.smartcart.common.event.OrderCreatedEvent;
 import com.smartcart.common.event.OrderCancelledEvent;
 import com.smartcart.common.event.OrderItemPayload;
 import com.smartcart.common.kafka.KafkaTopics;
@@ -20,9 +21,56 @@ public class OrderEventConsumer {
     private final InventoryService inventoryService;
 
     @KafkaListener(
+            topics = KafkaTopics.ORDER_CREATED,
+            groupId = "inventory-service",
+            containerFactory = "orderCreatedKafkaListenerContainerFactory"
+    )
+    public void handleOrderCreated(ConsumerRecord<String, OrderCreatedEvent> record) {
+        OrderCreatedEvent event = record.value();
+
+        log.info(
+                "Received ORDER_CREATED event | orderId={} | eventId={} | partition={} | offset={}",
+                event.getOrderId(),
+                event.getEventId(),
+                record.partition(),
+                record.offset()
+        );
+
+        try {
+            for (OrderItemPayload item : event.getItems()) {
+                log.info(
+                        "Reserving stock | productId={} | quantity={}",
+                        item.getProductId(),
+                        item.getQuantity()
+                );
+
+                inventoryService.reserveStock(
+                        item.getProductId(),
+                        item.getQuantity()
+                );
+            }
+
+            log.info(
+                    "Inventory reserved successfully for created order | orderId={}",
+                    event.getOrderId()
+            );
+
+        } catch (Exception ex) {
+            log.error(
+                    "Failed to process ORDER_CREATED event | orderId={} | eventId={}",
+                    event.getOrderId(),
+                    event.getEventId(),
+                    ex
+            );
+
+            throw ex;
+        }
+    }
+
+    @KafkaListener(
             topics = KafkaTopics.ORDER_CANCELLED,
             groupId = "inventory-service",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "orderCancelledKafkaListenerContainerFactory"
     )
     public void handleOrderCancelled(ConsumerRecord<String, OrderCancelledEvent> record) {
 

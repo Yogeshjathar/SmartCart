@@ -1,17 +1,16 @@
-package com.smartcart.inventory.config;
+package com.smartcart.notification.config;
 
 import com.smartcart.common.event.OrderCreatedEvent;
-import com.smartcart.common.event.OrderCancelledEvent;
+import com.smartcart.notification.event.PaymentFailedEvent;
+import com.smartcart.notification.event.PaymentSuccessEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
@@ -32,18 +31,25 @@ public class KafkaConsumerConfig {
                 new JsonDeserializer<>(OrderCreatedEvent.class);
         deserializer.addTrustedPackages("com.smartcart.common.event");
 
-        Map<String, Object> props = baseProps();
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
+        return new DefaultKafkaConsumerFactory<>(baseProps(), new StringDeserializer(), deserializer);
     }
 
     @Bean
-    public ConsumerFactory<String, OrderCancelledEvent> orderCancelledConsumerFactory() {
-        JsonDeserializer<OrderCancelledEvent> deserializer =
-                new JsonDeserializer<>(OrderCancelledEvent.class);
-        deserializer.addTrustedPackages("com.smartcart.common.event");
+    public ConsumerFactory<String, PaymentSuccessEvent> paymentSuccessConsumerFactory() {
+        JsonDeserializer<PaymentSuccessEvent> deserializer =
+                new JsonDeserializer<>(PaymentSuccessEvent.class);
+        deserializer.addTrustedPackages("com.smartcart.notification.event", "com.smartcart.payment.event");
 
-        Map<String, Object> props = baseProps();
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
+        return new DefaultKafkaConsumerFactory<>(baseProps(), new StringDeserializer(), deserializer);
+    }
+
+    @Bean
+    public ConsumerFactory<String, PaymentFailedEvent> paymentFailedConsumerFactory() {
+        JsonDeserializer<PaymentFailedEvent> deserializer =
+                new JsonDeserializer<>(PaymentFailedEvent.class);
+        deserializer.addTrustedPackages("com.smartcart.notification.event", "com.smartcart.payment.event");
+
+        return new DefaultKafkaConsumerFactory<>(baseProps(), new StringDeserializer(), deserializer);
     }
 
     private Map<String, Object> baseProps() {
@@ -65,10 +71,18 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, OrderCancelledEvent> orderCancelledKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, OrderCancelledEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentSuccessEvent> paymentSuccessKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PaymentSuccessEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(orderCancelledConsumerFactory());
+        factory.setConsumerFactory(paymentSuccessConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentFailedEvent> paymentFailedKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PaymentFailedEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(paymentFailedConsumerFactory());
         return factory;
     }
 }

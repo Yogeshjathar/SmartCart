@@ -1,5 +1,6 @@
 package com.smartcart.payment.consumer;
 
+import com.smartcart.common.kafka.KafkaTopics;
 import com.smartcart.payment.entity.Payment;
 import com.smartcart.payment.entity.PaymentStatus;
 import com.smartcart.payment.event.PaymentFailedEvent;
@@ -51,15 +52,16 @@ public class PaymentEventListener {
 
         if (success) {
             payment.setStatus(PaymentStatus.SUCCESS);
-            kafkaTemplate.send("payment-success-topic",
+            kafkaTemplate.send(KafkaTopics.PAYMENT_SUCCESS,
                     PaymentSuccessEvent.builder()
                             .userId(event.getUserId())
                             .orderId(event.getOrderId())
                             .build());
         } else {
             payment.setStatus(PaymentStatus.FAILED);
-            kafkaTemplate.send("payment-failed-topic",
+            kafkaTemplate.send(KafkaTopics.PAYMENT_FAILED,
                     PaymentFailedEvent.builder()
+                            .userId(event.getUserId())
                             .orderId(event.getOrderId())
                             .build());
         }

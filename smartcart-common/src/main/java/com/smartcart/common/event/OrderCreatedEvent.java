@@ -3,12 +3,14 @@ package com.smartcart.common.event;
 import com.smartcart.common.kafka.KafkaTopics;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
 @SuperBuilder
+@Jacksonized
 public class OrderCreatedEvent extends BaseEvent {
 
     private final String orderId;

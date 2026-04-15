@@ -2,8 +2,6 @@ package com.smartcart.order.service.impl;
 
 import com.smartcart.common.event.OrderCancelledEvent;
 import com.smartcart.common.event.OrderCreatedEvent;
-import com.smartcart.common.kafka.KafkaTopics;
-import com.smartcart.order.client.InventoryClient;
 import com.smartcart.order.dto.CreateOrderRequest;
 import com.smartcart.order.entity.Order;
 import com.smartcart.order.entity.OrderItem;
@@ -32,7 +30,6 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-    private final InventoryClient inventoryClient;
     private final EventProducer eventProducer;
     private final EventMapper eventMapper;
     private final MeterRegistry meterRegistry;
@@ -72,21 +69,12 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // Reserve inventory
-        saved.getItems().forEach(item ->
-                inventoryClient.reserveStock(item.getProductId(), item.getQuantity())
-        );
-
-        saved.setStatus(OrderStatus.RESERVED);
-        saved.setUpdatedAt(Instant.now());
-
         meterRegistry.counter("orders.created").increment();
 
-        // Publish Event
         OrderCreatedEvent event = eventMapper.buildOrderCreatedEvent(saved);
         eventProducer.publish(event);
 
-        return orderRepository.save(saved);
+        return saved;
     }
 
     @Override
