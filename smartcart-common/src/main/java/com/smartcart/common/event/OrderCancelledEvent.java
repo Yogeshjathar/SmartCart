@@ -9,16 +9,17 @@ import java.util.List;
 
 @Getter
 @SuperBuilder
-public class OrderCreatedEvent extends BaseEvent {
+public class OrderCancelledEvent extends BaseEvent {
 
     private final String orderId;
     private final String userId;
     private final List<OrderItemPayload> items;
     private final BigDecimal totalAmount;
     private final String currency;
+    private final String reason;   // optional (user_cancelled / payment_failed / timeout)
 
     @Override
     public String getTopic() {
-        return KafkaTopics.ORDER_CREATED;
+        return KafkaTopics.ORDER_CANCELLED;
     }
 }

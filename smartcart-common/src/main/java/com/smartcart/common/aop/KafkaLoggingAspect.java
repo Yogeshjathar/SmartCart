@@ -1,5 +1,6 @@
 package com.smartcart.common.aop;
 
+import com.smartcart.common.util.JsonUtil;
 import com.smartcart.common.util.TraceUtil;
 import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.Span;
@@ -23,13 +24,25 @@ public class KafkaLoggingAspect {
     // Intercept all KafkaTemplate.send() calls
     @Before("execution(* org.springframework.kafka.core.KafkaTemplate.send(..)) && args(topic, message)")
     public void logKafkaSend(String topic, Object message) {
+
         String traceId = TraceUtil.getTraceId();
         String correlationId = MDC.get("correlationId");
 
         // Create OT span for Kafka produce
         Span kafkaSpan = tracer.nextSpan().name("KafkaSend:" + topic).start();
+
         try (Tracer.SpanInScope ws = tracer.withSpan(kafkaSpan)) {
-            log.info("[traceId={}, correlationId={}] Sending message to Kafka topic: {}", traceId, correlationId, topic);
+
+            String payload = JsonUtil.convertToJson(message);
+
+            log.info(
+                    "[traceId={}, correlationId={}] Sending message to topic={} payload={}",
+                    traceId,
+                    correlationId,
+                    topic,
+                    payload
+            );
+
         } finally {
             kafkaSpan.end();
         }

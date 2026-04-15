@@ -1,11 +1,16 @@
 package com.smartcart.order.service.impl;
 
+import com.smartcart.common.event.OrderCancelledEvent;
+import com.smartcart.common.event.OrderCreatedEvent;
+import com.smartcart.common.kafka.KafkaTopics;
 import com.smartcart.order.client.InventoryClient;
 import com.smartcart.order.dto.CreateOrderRequest;
 import com.smartcart.order.entity.Order;
 import com.smartcart.order.entity.OrderItem;
 import com.smartcart.order.entity.OrderStatus;
 import com.smartcart.order.entity.PaymentStatus;
+import com.smartcart.order.mapper.EventMapper;
+import com.smartcart.order.producer.EventProducer;
 import com.smartcart.order.repository.OrderRepository;
 import com.smartcart.order.service.OrderService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -28,6 +33,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final InventoryClient inventoryClient;
+    private final EventProducer eventProducer;
+    private final EventMapper eventMapper;
     private final MeterRegistry meterRegistry;
 
     @Override
@@ -75,6 +82,10 @@ public class OrderServiceImpl implements OrderService {
 
         meterRegistry.counter("orders.created").increment();
 
+        // Publish Event
+        OrderCreatedEvent event = eventMapper.buildOrderCreatedEvent(saved);
+        eventProducer.publish(event);
+
         return orderRepository.save(saved);
     }
 
@@ -99,13 +110,14 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Cannot cancel confirmed order");
         }
 
-        order.getItems().forEach(item ->
-                inventoryClient.releaseStock(item.getProductId(), item.getQuantity())
-        );
-
         order.setStatus(OrderStatus.CANCELLED);
         order.setUpdatedAt(Instant.now());
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        OrderCancelledEvent event = eventMapper.buildOrderCancelledEvent(savedOrder);
+        eventProducer.publish(event);
+
+        return savedOrder;
     }
 }

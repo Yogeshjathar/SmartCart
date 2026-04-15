@@ -1,5 +1,6 @@
 package com.smartcart.notification.consumer;
 
+import com.smartcart.common.kafka.KafkaTopics;
 import com.smartcart.notification.entity.NotificationChannel;
 import com.smartcart.notification.entity.NotificationType;
 import com.smartcart.notification.event.OrderCreatedEvent;
@@ -16,7 +17,7 @@ public class NotificationEventListener {
 
     private final NotificationService notificationService;
 
-    @KafkaListener(topics = "order-created-topic", groupId = "notification-group")
+    @KafkaListener(topics = KafkaTopics.ORDER_CREATED, groupId = "notification-group")
     public void handleOrderCreated(OrderCreatedEvent event) {
 
         notificationService.createAndSend(
@@ -28,7 +29,7 @@ public class NotificationEventListener {
         );
     }
 
-    @KafkaListener(topics = "payment-success-topic", groupId = "notification-group")
+    @KafkaListener(topics = KafkaTopics.PAYMENT_SUCCESS, groupId = "notification-group")
     public void handlePaymentSuccess(PaymentSuccessEvent event) {
 
         notificationService.createAndSend(
@@ -40,7 +41,7 @@ public class NotificationEventListener {
         );
     }
 
-    @KafkaListener(topics = "payment-failed-topic", groupId = "notification-group")
+    @KafkaListener(topics = KafkaTopics.PAYMENT_FAILED, groupId = "notification-group")
     public void handlePaymentFailed(PaymentFailedEvent event) {
 
         notificationService.createAndSend(
