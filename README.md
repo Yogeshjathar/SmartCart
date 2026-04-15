@@ -23,7 +23,7 @@ SmartCart follows a distributed microservices architecture:
 
 ## ⚙️ Tech Stack
 
-- Java 21
+- Java 21+
 - Spring Boot
 - Spring Cloud (Eureka, OpenFeign)
 - Spring Security
