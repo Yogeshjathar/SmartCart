@@ -1,6 +1,7 @@
-package com.smartcart.notification.config;
+package com.smartcart.order.config;
 
-import com.smartcart.common.event.OrderCreatedEvent;
+import com.smartcart.common.event.InventoryReservationFailedEvent;
+import com.smartcart.common.event.InventoryReservedEvent;
 import com.smartcart.common.event.PaymentFailedEvent;
 import com.smartcart.common.event.PaymentSuccessEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -26,11 +27,18 @@ public class KafkaConsumerConfig {
     private String groupId;
 
     @Bean
-    public ConsumerFactory<String, OrderCreatedEvent> orderCreatedConsumerFactory() {
-        JsonDeserializer<OrderCreatedEvent> deserializer =
-                new JsonDeserializer<>(OrderCreatedEvent.class);
+    public ConsumerFactory<String, InventoryReservedEvent> inventoryReservedConsumerFactory() {
+        JsonDeserializer<InventoryReservedEvent> deserializer =
+                new JsonDeserializer<>(InventoryReservedEvent.class);
         deserializer.addTrustedPackages("com.smartcart.common.event");
+        return new DefaultKafkaConsumerFactory<>(baseProps(), new StringDeserializer(), deserializer);
+    }
 
+    @Bean
+    public ConsumerFactory<String, InventoryReservationFailedEvent> inventoryReservationFailedConsumerFactory() {
+        JsonDeserializer<InventoryReservationFailedEvent> deserializer =
+                new JsonDeserializer<>(InventoryReservationFailedEvent.class);
+        deserializer.addTrustedPackages("com.smartcart.common.event");
         return new DefaultKafkaConsumerFactory<>(baseProps(), new StringDeserializer(), deserializer);
     }
 
@@ -39,7 +47,6 @@ public class KafkaConsumerConfig {
         JsonDeserializer<PaymentSuccessEvent> deserializer =
                 new JsonDeserializer<>(PaymentSuccessEvent.class);
         deserializer.addTrustedPackages("com.smartcart.common.event");
-
         return new DefaultKafkaConsumerFactory<>(baseProps(), new StringDeserializer(), deserializer);
     }
 
@@ -48,25 +55,22 @@ public class KafkaConsumerConfig {
         JsonDeserializer<PaymentFailedEvent> deserializer =
                 new JsonDeserializer<>(PaymentFailedEvent.class);
         deserializer.addTrustedPackages("com.smartcart.common.event");
-
         return new DefaultKafkaConsumerFactory<>(baseProps(), new StringDeserializer(), deserializer);
     }
 
-    private Map<String, Object> baseProps() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        return props;
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, InventoryReservedEvent> inventoryReservedKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, InventoryReservedEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(inventoryReservedConsumerFactory());
+        return factory;
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent> orderCreatedKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, InventoryReservationFailedEvent> inventoryReservationFailedKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, InventoryReservationFailedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(orderCreatedConsumerFactory());
+        factory.setConsumerFactory(inventoryReservationFailedConsumerFactory());
         return factory;
     }
 
@@ -84,5 +88,15 @@ public class KafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(paymentFailedConsumerFactory());
         return factory;
+    }
+
+    private Map<String, Object> baseProps() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        return props;
     }
 }

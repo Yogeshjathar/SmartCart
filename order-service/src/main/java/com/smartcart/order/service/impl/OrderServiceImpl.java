@@ -2,6 +2,9 @@ package com.smartcart.order.service.impl;
 
 import com.smartcart.common.event.OrderCancelledEvent;
 import com.smartcart.common.event.OrderCreatedEvent;
+import com.smartcart.common.exception.ConflictException;
+import com.smartcart.common.exception.ErrorCode;
+import com.smartcart.common.exception.ResourceNotFoundException;
 import com.smartcart.order.dto.CreateOrderRequest;
 import com.smartcart.order.entity.Order;
 import com.smartcart.order.entity.OrderItem;
@@ -80,7 +83,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrder(UUID orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found for id: " + orderId,
+                        ErrorCode.ORDER_NOT_FOUND
+                ));
     }
 
     @Override
@@ -94,8 +100,16 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = getOrder(orderId);
 
-        if (order.getStatus() == OrderStatus.CONFIRMED) {
-            throw new RuntimeException("Cannot cancel confirmed order");
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            log.info("Cancel requested for already cancelled order | orderId={}", orderId);
+            return order;
+        }
+
+        if (order.getStatus() == OrderStatus.CONFIRMED || order.getStatus() == OrderStatus.FAILED) {
+            throw new ConflictException(
+                    "Order cannot be cancelled in status: " + order.getStatus(),
+                    ErrorCode.ORDER_CANNOT_BE_CANCELLED
+            );
         }
 
         order.setStatus(OrderStatus.CANCELLED);

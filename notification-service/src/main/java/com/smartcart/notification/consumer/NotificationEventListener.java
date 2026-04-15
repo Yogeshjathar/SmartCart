@@ -1,11 +1,11 @@
 package com.smartcart.notification.consumer;
 
 import com.smartcart.common.event.OrderCreatedEvent;
+import com.smartcart.common.event.PaymentFailedEvent;
+import com.smartcart.common.event.PaymentSuccessEvent;
 import com.smartcart.common.kafka.KafkaTopics;
 import com.smartcart.notification.entity.NotificationChannel;
 import com.smartcart.notification.entity.NotificationType;
-import com.smartcart.notification.event.PaymentFailedEvent;
-import com.smartcart.notification.event.PaymentSuccessEvent;
 import com.smartcart.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +56,7 @@ public class NotificationEventListener {
         PaymentSuccessEvent event = record.value();
 
         notificationService.createAndSend(
-                event.getOrderId(),
+                UUID.fromString(event.getOrderId()),
                 event.getUserId(),
                 NotificationType.PAYMENT_SUCCESS,
                 NotificationChannel.EMAIL,
@@ -73,7 +73,7 @@ public class NotificationEventListener {
         PaymentFailedEvent event = record.value();
 
         notificationService.createAndSend(
-                event.getOrderId(),
+                UUID.fromString(event.getOrderId()),
                 event.getUserId(),
                 NotificationType.PAYMENT_FAILED,
                 NotificationChannel.EMAIL,

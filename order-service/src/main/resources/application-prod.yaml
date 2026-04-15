@@ -20,6 +20,9 @@ spring:
 
   kafka:
     bootstrap-servers: kafka:${KAFKA_PORT:9092}
+    consumer:
+      group-id: order-service
+      auto-offset-reset: earliest
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

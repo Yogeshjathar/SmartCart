@@ -11,6 +11,8 @@ public class KafkaTopics {
     public static final String ORDER_CANCELLED = "order-cancelled";
 
     public static final String INVENTORY_UPDATED = "inventory-updated";
+    public static final String INVENTORY_RESERVED = "inventory-reserved";
+    public static final String INVENTORY_RESERVATION_FAILED = "inventory-reservation-failed";
 
     public static final String PAYMENT_SUCCESS = "payment-success";
     public static final String PAYMENT_FAILED = "payment-failed";

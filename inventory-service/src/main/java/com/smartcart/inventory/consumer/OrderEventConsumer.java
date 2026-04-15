@@ -1,9 +1,13 @@
 package com.smartcart.inventory.consumer;
 
+import com.smartcart.common.event.OrderItemPayload;
 import com.smartcart.common.event.OrderCreatedEvent;
 import com.smartcart.common.event.OrderCancelledEvent;
-import com.smartcart.common.event.OrderItemPayload;
+import com.smartcart.common.event.PaymentFailedEvent;
+import com.smartcart.common.event.PaymentSuccessEvent;
 import com.smartcart.common.kafka.KafkaTopics;
+import com.smartcart.inventory.mapper.EventMapper;
+import com.smartcart.inventory.producer.EventProducer;
 import com.smartcart.inventory.service.InventoryService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,8 @@ import org.springframework.stereotype.Service;
 public class OrderEventConsumer {
 
     private final InventoryService inventoryService;
+    private final EventMapper eventMapper;
+    private final EventProducer eventProducer;
 
     @KafkaListener(
             topics = KafkaTopics.ORDER_CREATED,
@@ -36,6 +42,8 @@ public class OrderEventConsumer {
                 record.offset()
         );
 
+        int reservedItems = 0;
+
         try {
             for (OrderItemPayload item : event.getItems()) {
                 log.info(
@@ -48,7 +56,11 @@ public class OrderEventConsumer {
                         item.getProductId(),
                         item.getQuantity()
                 );
+
+                reservedItems++;
             }
+
+            eventProducer.publish(eventMapper.buildInventoryReservedEvent(event));
 
             log.info(
                     "Inventory reserved successfully for created order | orderId={}",
@@ -56,14 +68,18 @@ public class OrderEventConsumer {
             );
 
         } catch (Exception ex) {
+            compensateReservation(event, reservedItems);
+
+            eventProducer.publish(
+                    eventMapper.buildInventoryReservationFailedEvent(event, ex.getMessage())
+            );
+
             log.error(
                     "Failed to process ORDER_CREATED event | orderId={} | eventId={}",
                     event.getOrderId(),
                     event.getEventId(),
                     ex
             );
-
-            throw ex;
         }
     }
 
@@ -115,6 +131,63 @@ public class OrderEventConsumer {
             );
 
             throw ex; // let Kafka retry
+        }
+    }
+
+    @KafkaListener(
+            topics = KafkaTopics.PAYMENT_SUCCESS,
+            groupId = "inventory-service",
+            containerFactory = "paymentSuccessKafkaListenerContainerFactory"
+    )
+    public void handlePaymentSuccess(ConsumerRecord<String, PaymentSuccessEvent> record) {
+        PaymentSuccessEvent event = record.value();
+
+        try {
+            for (OrderItemPayload item : event.getItems()) {
+                inventoryService.confirmStock(item.getProductId(), item.getQuantity());
+            }
+
+            log.info("Inventory confirmed for paid order | orderId={}", event.getOrderId());
+        } catch (Exception ex) {
+            log.error("Failed to confirm inventory for paid order | orderId={}", event.getOrderId(), ex);
+            throw ex;
+        }
+    }
+
+    @KafkaListener(
+            topics = KafkaTopics.PAYMENT_FAILED,
+            groupId = "inventory-service",
+            containerFactory = "paymentFailedKafkaListenerContainerFactory"
+    )
+    public void handlePaymentFailed(ConsumerRecord<String, PaymentFailedEvent> record) {
+        PaymentFailedEvent event = record.value();
+
+        try {
+            for (OrderItemPayload item : event.getItems()) {
+                inventoryService.releaseStock(item.getProductId(), item.getQuantity());
+            }
+
+            log.info("Inventory released after payment failure | orderId={}", event.getOrderId());
+        } catch (Exception ex) {
+            log.error("Failed to release inventory after payment failure | orderId={}", event.getOrderId(), ex);
+            throw ex;
+        }
+    }
+
+    private void compensateReservation(OrderCreatedEvent event, int reservedItems) {
+        for (int index = reservedItems - 1; index >= 0; index--) {
+            OrderItemPayload item = event.getItems().get(index);
+
+            try {
+                inventoryService.releaseStock(item.getProductId(), item.getQuantity());
+            } catch (Exception compensationEx) {
+                log.error(
+                        "Failed to compensate reserved stock | orderId={} | productId={}",
+                        event.getOrderId(),
+                        item.getProductId(),
+                        compensationEx
+                );
+            }
         }
     }
 }

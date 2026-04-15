@@ -20,6 +20,9 @@ spring:
 
   kafka:
     bootstrap-servers: kafka:${KAFKA_PORT}   # prod Kafka
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
 
 eureka:
   client:
