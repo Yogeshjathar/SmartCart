@@ -22,6 +22,15 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 
+    consumer:
+      group-id: inventory-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.smartcart.common.event"
+        spring.json.use.type.headers: false
+
 eureka:
   client:
     service-url:
@@ -40,7 +49,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus.metrics,loggers  # dev monitoring
+        include: health,info,prometheus,metrics,loggers  # dev monitoring
 
   endpoint:
     health:
@@ -54,11 +63,13 @@ management:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans
 
-ogging:
+logging:
   level:
     root: INFO                  # show everything in dev
     org.springframework: INFO
     com.smartcart: DEBUG
+    org.apache.kafka: DEBUG
+    org.springframework.kafka: DEBUG
 
 springdoc:
   api-docs:
