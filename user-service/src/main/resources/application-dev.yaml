@@ -26,13 +26,13 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
       retries: 10
+      linger-ms: 5
+      batch-size: 16384
       properties:
         enable.idempotence: true
         max.in.flight.requests.per.connection: 5
         delivery.timeout.ms: 120000
         request.timeout.ms: 30000
-        linger.ms: 5
-        batch.size: 16384
 
 eureka:
   client:

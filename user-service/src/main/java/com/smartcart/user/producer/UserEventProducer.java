@@ -1,6 +1,7 @@
 package com.smartcart.user.producer;
 
 import com.smartcart.common.event.UserCreatedEvent;
+import com.smartcart.common.kafka.KafkaTopics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -26,7 +27,7 @@ public class UserEventProducer {
     private final MeterRegistry meterRegistry;
 
 //    @Value("${smartcart.kafka.topic.user-created}")
-    private String topic = "user-created";
+    private String topic = KafkaTopics.USER_CREATED;
 
     public void publish(UserCreatedEvent event) {
 
@@ -41,9 +42,11 @@ public class UserEventProducer {
         record.headers().add("eventId",
                 event.getEventId().getBytes(StandardCharsets.UTF_8));
         record.headers().add("eventType",
-                event.getEventType().getBytes(StandardCharsets.UTF_8));
+                event.getEventType().name().getBytes(StandardCharsets.UTF_8));
         record.headers().add("version",
                 event.getVersion().getBytes(StandardCharsets.UTF_8));
+        record.headers().add("traceId",
+                event.getTraceId().getBytes(StandardCharsets.UTF_8));
         record.headers().add("correlationId",
                 event.getCorrelationId().getBytes(StandardCharsets.UTF_8));
         record.headers().add("source",
@@ -68,7 +71,7 @@ public class UserEventProducer {
                 // ✅ Success Metric
                 Counter.builder("smartcart.kafka.publish.success")
                         .tag("topic", topic)
-                        .tag("eventType", event.getEventType())
+                        .tag("eventType", event.getEventType().name())
                         .register(meterRegistry)
                         .increment();
 
@@ -91,7 +94,7 @@ public class UserEventProducer {
                 // ❌ Failure Metric
                 Counter.builder("smartcart.kafka.publish.failure")
                         .tag("topic", topic)
-                        .tag("eventType", event.getEventType())
+                        .tag("eventType", event.getEventType().name())
                         .register(meterRegistry)
                         .increment();
 
