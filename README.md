@@ -64,6 +64,7 @@ smartcart-parent
 - Centralized API documentation (Swagger)
 - Service discovery (Eureka)
 - Inter-service communication (OpenFeign)
+- Centralized logging
 - Monitoring and tracing (Micrometer, Prometheus, Grafana, OpenTelemetry)
 
 ---
@@ -159,7 +160,6 @@ docker compose -f docker-compose.services.yml up -d
 ---
 ## 📌 Future Improvements
 
-- Centralized logging
 - CI/CD pipeline
 - Kubernetes deployment
 - Resilience4j circuit breaker, rate limiting, and retry mechanisms
