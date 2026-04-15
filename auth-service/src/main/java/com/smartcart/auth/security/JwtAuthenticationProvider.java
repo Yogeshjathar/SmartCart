@@ -1,5 +1,6 @@
 package com.smartcart.auth.security;
 
+import com.smartcart.common.exception.UnauthorizedException;
 import com.smartcart.auth.util.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 
         // 1️⃣ Validate Token
         if (!jwtTokenUtil.isTokenValid(token)) {
-            throw new RuntimeException("Invalid or expired JWT token");
+            throw new UnauthorizedException("Invalid or expired JWT token");
         }
 
         // 2️⃣ Extract Claims

@@ -1,6 +1,7 @@
 package com.smartcart.inventory.service.impl;
 
 import com.smartcart.common.event.InventoryUpdatedEvent;
+import com.smartcart.common.exception.ConflictException;
 import com.smartcart.common.exception.ErrorCode;
 import com.smartcart.common.exception.ResourceNotFoundException;
 import com.smartcart.inventory.dto.InventoryRequest;
@@ -75,7 +76,10 @@ public class InventoryServiceImpl implements InventoryService {
                         "Inventory not found for productId: " + productId, ErrorCode.PRODUCT_NOT_FOUND));
 
         if (inventory.getAvailableQuantity() < quantity) {
-            throw new RuntimeException("Insufficient stock for productId: " + productId);
+            throw new ConflictException(
+                    "Insufficient stock for productId: " + productId,
+                    ErrorCode.INSUFFICIENT_STOCK
+            );
         }
 
         int previous = inventory.getAvailableQuantity();
@@ -108,7 +112,10 @@ public class InventoryServiceImpl implements InventoryService {
                         "Inventory not found for productId: " + productId, ErrorCode.PRODUCT_NOT_FOUND));
 
         if (inventory.getReservedQuantity() < quantity) {
-            throw new RuntimeException("Insufficient reserved stock for productId: " + productId);
+            throw new ConflictException(
+                    "Insufficient reserved stock for productId: " + productId,
+                    ErrorCode.INSUFFICIENT_RESERVED_STOCK
+            );
         }
 
         int previous = inventory.getAvailableQuantity();
@@ -141,7 +148,10 @@ public class InventoryServiceImpl implements InventoryService {
                         "Inventory not found for productId: " + productId, ErrorCode.PRODUCT_NOT_FOUND));
 
         if (inventory.getReservedQuantity() < quantity) {
-            throw new RuntimeException("Insufficient reserved stock for productId: " + productId);
+            throw new ConflictException(
+                    "Insufficient reserved stock for productId: " + productId,
+                    ErrorCode.INSUFFICIENT_RESERVED_STOCK
+            );
         }
 
         inventory.setReservedQuantity(inventory.getReservedQuantity() - quantity);
