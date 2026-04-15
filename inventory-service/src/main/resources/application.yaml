@@ -1,9 +1,22 @@
-server:
-  port: ${INVENTORY_SERVICE_PORT:8084}
-
 spring:
   application:
     name: inventory-service
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+
+eureka:
+  instance:
+    metadata-map:
+      version: 1.0
+      environment: ${spring.profiles.active}
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+
+swagger:
+  title: Inventory Service API
+  description: APIs for managing inventory in SmartCart
+  version: v1.0

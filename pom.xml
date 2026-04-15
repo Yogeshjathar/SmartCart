@@ -129,6 +129,19 @@
                 <version>${jjwt.version}</version>
             </dependency>
 
+            <!-- Swagger -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>2.8.6</version>
+            </dependency>
+
+            <!-- Swagger for Api Gateway -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+                <version>2.8.6</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

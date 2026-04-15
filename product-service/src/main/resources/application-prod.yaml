@@ -1,10 +1,7 @@
 server:
-  port: ${PRODUCT_SERVICE_PORT:8083}
+  port: ${SERVER_PORT:8083} # default to 8083 for product-service, can override in prod
 
 spring:
-  application:
-    name: product-service
-
   data:
     mongodb:
       uri: mongodb://localhost:27017/product_db  # local dev
@@ -21,11 +18,12 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://discovery-server:${EUREKA_PORT}/eureka/
+      defaultZone: http://discovery-server:${EUREKA_PORT:8761}/eureka/
     fetch-registry: true
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
+
   instance:
     prefer-ip-address: true
     hostname: ${HOSTNAME:user-service}
@@ -35,22 +33,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"                 # expose all actuator endpoints for monitoring
-      base-path: /actuator
+        include: health,info,prometheus             # expose all actuator endpoints for monitoring
+
   endpoint:
     prometheus:
       enabled: true
     health:
       show-details: when-authorized  # only admins see full health info
+
   metrics:
     export:
       prometheus:
         enabled: true                # allow Prometheus scraping
     enable:
       all: true                      # enable all default metrics
+
   tracing:
     sampling:
       probability: 0.1                # trace 10% of requests to reduce overhead
+
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
@@ -60,3 +61,12 @@ logging:
     root: WARN
     org.springframework: WARN
     com.smartcart.product: INFO
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+swagger:
+  server-url: http://api.smartcart.com

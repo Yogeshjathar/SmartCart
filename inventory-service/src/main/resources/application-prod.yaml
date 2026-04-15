@@ -1,3 +1,7 @@
+server:
+  port: ${INVENTORY_SERVICE_PORT:8084}
+
+
 spring:
   datasource:
     url: jdbc:postgresql://postgres:5432/inventory_db
@@ -22,7 +26,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://discovery-server:8761/eureka/
+      defaultZone: http://discovery-server:${EUREKA_PORT:8761}/eureka/
     fetch-registry: true
     register-with-eureka: true
     lease-renewal-interval-in-seconds: 30
@@ -36,22 +40,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"                 # expose all actuator endpoints for monitoring
-      base-path: /actuator
+        include: health,info,prometheus              # expose all actuator endpoints for monitoring
+
   endpoint:
     prometheus:
       enabled: true
     health:
       show-details: when-authorized  # only admins see full health info
+
   metrics:
     export:
       prometheus:
         enabled: true                # allow Prometheus scraping
     enable:
       all: true                      # enable all default metrics
+
   tracing:
     sampling:
       probability: 0.1                # trace 10% of requests to reduce overhead
+
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
@@ -61,3 +68,12 @@ logging:
     root: WARN                 # production logs
     org.springframework: WARN
     com.smartcart: INFO         # your app packages
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+swagger:
+  server-url: https://api.smartcart.com
