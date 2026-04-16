@@ -27,6 +27,14 @@ public class NotificationServiceImpl implements NotificationService {
                               NotificationChannel channel,
                               String message) {
 
+        log.info(
+                "Creating notification | orderId={} | userId={} | type={} | channel={}",
+                orderId,
+                userId,
+                type,
+                channel
+        );
+
         com.smartcart.notification.model.Notification notification = com.smartcart.notification.model.Notification.builder()
                 .orderId(orderId)
                 .userId(userId)
@@ -40,16 +48,18 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         repository.save(notification);
+        log.info("Notification saved with status={} for orderId={}", notification.getStatus(), orderId);
 
         try {
             simulateSending(channel, notification.getRecipient(), message);
 
             notification.setStatus(NotificationStatus.SENT);
             notification.setSentAt(Instant.now());
+            log.info("Notification sent successfully for orderId={}", orderId);
 
         } catch (Exception e) {
             notification.setStatus(NotificationStatus.FAILED);
-            log.error("Notification failed for order {}", orderId);
+            log.error("Notification failed for order {}", orderId, e);
         }
 
         notification.setUpdatedAt(Instant.now());

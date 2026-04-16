@@ -2,6 +2,7 @@ package com.smartcart.user.service.impl;
 
 import com.smartcart.common.dto.UserAuthDetails;
 import com.smartcart.common.event.AggregateType;
+import com.smartcart.common.event.EventType;
 import com.smartcart.common.event.UserCreatedEvent;
 import com.smartcart.common.exception.ConflictException;
 import com.smartcart.common.exception.ErrorCode;
@@ -59,7 +60,7 @@ public class UserServiceImpl implements UserService {
         // 🔥 Build UserCreatedEvent (Production Style)
         UserCreatedEvent event = UserCreatedEvent.builder()
                 .eventId(UUID.randomUUID().toString())
-                .eventType("USER_CREATED")
+                .eventType(EventType.USER_CREATED)
                 .aggregateId(savedUser.getId().toString())
                 .aggregateType(AggregateType.USER)
                 .occurredAt(Instant.now())

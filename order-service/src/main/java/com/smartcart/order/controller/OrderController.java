@@ -1,10 +1,12 @@
 package com.smartcart.order.controller;
 
+import com.smartcart.common.response.ApiResponse;
 import com.smartcart.order.dto.CreateOrderRequest;
 import com.smartcart.order.entity.Order;
 import com.smartcart.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,7 +35,13 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/cancel")
-    public Order cancelOrder(@PathVariable UUID orderId) {
-        return orderService.cancelOrder(orderId);
+    public ResponseEntity<ApiResponse<Order>> cancelOrder(@PathVariable UUID orderId) {
+        Order order = orderService.cancelOrder(orderId);
+
+        String message = order.getStatus() == com.smartcart.order.entity.OrderStatus.CANCELLED
+                ? "Order cancellation processed successfully"
+                : "Order fetched successfully";
+
+        return ResponseEntity.ok(ApiResponse.success(order, message));
     }
 }

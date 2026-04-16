@@ -1,11 +1,17 @@
 package com.smartcart.order.service.impl;
 
-import com.smartcart.order.client.InventoryClient;
+import com.smartcart.common.event.OrderCancelledEvent;
+import com.smartcart.common.event.OrderCreatedEvent;
+import com.smartcart.common.exception.ConflictException;
+import com.smartcart.common.exception.ErrorCode;
+import com.smartcart.common.exception.ResourceNotFoundException;
 import com.smartcart.order.dto.CreateOrderRequest;
 import com.smartcart.order.entity.Order;
 import com.smartcart.order.entity.OrderItem;
 import com.smartcart.order.entity.OrderStatus;
 import com.smartcart.order.entity.PaymentStatus;
+import com.smartcart.order.mapper.EventMapper;
+import com.smartcart.order.producer.EventProducer;
 import com.smartcart.order.repository.OrderRepository;
 import com.smartcart.order.service.OrderService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -27,7 +33,8 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-    private final InventoryClient inventoryClient;
+    private final EventProducer eventProducer;
+    private final EventMapper eventMapper;
     private final MeterRegistry meterRegistry;
 
     @Override
@@ -65,23 +72,21 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // Reserve inventory
-        saved.getItems().forEach(item ->
-                inventoryClient.reserveStock(item.getProductId(), item.getQuantity())
-        );
-
-        saved.setStatus(OrderStatus.RESERVED);
-        saved.setUpdatedAt(Instant.now());
-
         meterRegistry.counter("orders.created").increment();
 
-        return orderRepository.save(saved);
+        OrderCreatedEvent event = eventMapper.buildOrderCreatedEvent(saved);
+        eventProducer.publish(event);
+
+        return saved;
     }
 
     @Override
     public Order getOrder(UUID orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found for id: " + orderId,
+                        ErrorCode.ORDER_NOT_FOUND
+                ));
     }
 
     @Override
@@ -95,17 +100,26 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = getOrder(orderId);
 
-        if (order.getStatus() == OrderStatus.CONFIRMED) {
-            throw new RuntimeException("Cannot cancel confirmed order");
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            log.info("Cancel requested for already cancelled order | orderId={}", orderId);
+            return order;
         }
 
-        order.getItems().forEach(item ->
-                inventoryClient.releaseStock(item.getProductId(), item.getQuantity())
-        );
+        if (order.getStatus() == OrderStatus.CONFIRMED || order.getStatus() == OrderStatus.FAILED) {
+            throw new ConflictException(
+                    "Order cannot be cancelled in status: " + order.getStatus(),
+                    ErrorCode.ORDER_CANNOT_BE_CANCELLED
+            );
+        }
 
         order.setStatus(OrderStatus.CANCELLED);
         order.setUpdatedAt(Instant.now());
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        OrderCancelledEvent event = eventMapper.buildOrderCancelledEvent(savedOrder);
+        eventProducer.publish(event);
+
+        return savedOrder;
     }
 }
