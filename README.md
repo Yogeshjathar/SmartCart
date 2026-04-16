@@ -165,5 +165,4 @@ docker compose -f docker-compose.services.yml up -d
 - Resilience4j circuit breaker, rate limiting, and retry mechanisms
 
 ## 👨‍💻 Author
-
-SmartCart - Learning-focused enterprise-grade architecture project.
+YOGESH JATHAR
