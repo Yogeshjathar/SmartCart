@@ -51,6 +51,8 @@ logs/
 /nbdist/
 /.nb-gradle/
 build/
+node_modules/
+dist/
 
 # =============================
 # VS Code

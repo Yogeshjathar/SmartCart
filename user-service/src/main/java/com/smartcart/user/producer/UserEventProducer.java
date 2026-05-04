@@ -2,20 +2,19 @@ package com.smartcart.user.producer;
 
 import com.smartcart.common.event.UserCreatedEvent;
 import com.smartcart.common.kafka.KafkaTopics;
+import com.smartcart.common.util.KafkaTraceUtil;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.tracing.Tracer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -25,8 +24,8 @@ public class UserEventProducer {
 
     private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
     private final MeterRegistry meterRegistry;
+    private final Tracer tracer;
 
-//    @Value("${smartcart.kafka.topic.user-created}")
     private String topic = KafkaTopics.USER_CREATED;
 
     public void publish(UserCreatedEvent event) {
@@ -38,19 +37,7 @@ public class UserEventProducer {
         ProducerRecord<String, UserCreatedEvent> record =
                 new ProducerRecord<>(topic, key, event);
 
-        // ✅ Add Standard Headers
-        record.headers().add("eventId",
-                event.getEventId().getBytes(StandardCharsets.UTF_8));
-        record.headers().add("eventType",
-                event.getEventType().name().getBytes(StandardCharsets.UTF_8));
-        record.headers().add("version",
-                event.getVersion().getBytes(StandardCharsets.UTF_8));
-        record.headers().add("traceId",
-                event.getTraceId().getBytes(StandardCharsets.UTF_8));
-        record.headers().add("correlationId",
-                event.getCorrelationId().getBytes(StandardCharsets.UTF_8));
-        record.headers().add("source",
-                event.getSource().getBytes(StandardCharsets.UTF_8));
+        KafkaTraceUtil.addTraceHeaders(record, event, tracer);
 
         log.info(
                 "Publishing event | eventId={} | aggregateId={} | correlationId={}",

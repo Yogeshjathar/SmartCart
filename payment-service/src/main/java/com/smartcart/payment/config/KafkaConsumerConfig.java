@@ -37,6 +37,7 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, InventoryReservedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(inventoryReservedConsumerFactory());
+        factory.getContainerProperties().setObservationEnabled(true);
         return factory;
     }
 

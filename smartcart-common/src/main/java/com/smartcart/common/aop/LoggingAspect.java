@@ -24,13 +24,12 @@ public class LoggingAspect {
 
     @Around("(execution(* com.smartcart..service..*(..)) || execution(* com.smartcart..controller..*(..))) && !bean(*Filter)")
     public Object logServiceMethods(ProceedingJoinPoint joinPoint) throws Throwable {
-        String traceId = TraceUtil.getTraceId();
-        String correlationId = MDC.get("correlationId");
-
-        // Create child OT span
         Span span = tracer.nextSpan().name(joinPoint.getSignature().toShortString()).start();
 
         try (Tracer.SpanInScope ws = tracer.withSpan(span)) {
+            TraceUtil.syncFromTracer(tracer);
+            String traceId = TraceUtil.currentTraceId(tracer);
+            String correlationId = MDC.get(TraceUtil.CORRELATION_ID);
             long start = System.currentTimeMillis();
             log.info("[traceId={}, correlationId={}] → Entering {}", traceId, correlationId, joinPoint.getSignature());
 
@@ -46,6 +45,8 @@ public class LoggingAspect {
             }
             return result;
         } catch (Throwable ex) {
+            String traceId = TraceUtil.currentTraceId(tracer);
+            String correlationId = MDC.get(TraceUtil.CORRELATION_ID);
             log.error("[traceId={}, correlationId={}] Exception in {}: {}",
                     traceId, correlationId, joinPoint.getSignature(), ex.getMessage(), ex);
             throw ex;

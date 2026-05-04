@@ -67,6 +67,7 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(orderCreatedConsumerFactory());
+        factory.getContainerProperties().setObservationEnabled(true);
         return factory;
     }
 
@@ -75,6 +76,7 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, PaymentSuccessEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(paymentSuccessConsumerFactory());
+        factory.getContainerProperties().setObservationEnabled(true);
         return factory;
     }
 
@@ -83,6 +85,7 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, PaymentFailedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(paymentFailedConsumerFactory());
+        factory.getContainerProperties().setObservationEnabled(true);
         return factory;
     }
 }

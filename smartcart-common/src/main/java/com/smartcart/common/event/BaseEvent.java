@@ -22,6 +22,7 @@ public abstract class BaseEvent implements Serializable {
     @Builder.Default
     private final Instant occurredAt = DateTimeUtil.nowUTC();
     private final String traceId;
+    private final String spanId;
     private final String version;
     private final String correlationId;    // For saga / workflow tracking
     private final String source;

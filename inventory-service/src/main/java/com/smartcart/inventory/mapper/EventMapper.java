@@ -5,7 +5,7 @@ import com.smartcart.common.event.EventType;
 import com.smartcart.common.event.InventoryReservationFailedEvent;
 import com.smartcart.common.event.InventoryReservedEvent;
 import com.smartcart.common.event.OrderCreatedEvent;
-import org.slf4j.MDC;
+import com.smartcart.common.util.TraceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +26,7 @@ public class EventMapper {
                 .aggregateType(AggregateType.ORDER)
                 .occurredAt(Instant.now())
                 .traceId(resolveTraceId(orderEvent.getTraceId()))
+                .spanId(TraceUtil.getSpanId())
                 .version("1.0")
                 .correlationId(resolveCorrelationId(orderEvent.getCorrelationId(), orderEvent.getOrderId()))
                 .source(serviceName)
@@ -45,6 +46,7 @@ public class EventMapper {
                 .aggregateType(AggregateType.ORDER)
                 .occurredAt(Instant.now())
                 .traceId(resolveTraceId(orderEvent.getTraceId()))
+                .spanId(TraceUtil.getSpanId())
                 .version("1.0")
                 .correlationId(resolveCorrelationId(orderEvent.getCorrelationId(), orderEvent.getOrderId()))
                 .source(serviceName)
@@ -58,7 +60,7 @@ public class EventMapper {
     }
 
     private String resolveTraceId(String traceId) {
-        return traceId != null ? traceId : MDC.get("traceId");
+        return traceId != null ? traceId : TraceUtil.getTraceId();
     }
 
     private String resolveCorrelationId(String correlationId, String orderId) {
@@ -66,7 +68,7 @@ public class EventMapper {
             return correlationId;
         }
 
-        String fromMdc = MDC.get("correlationId");
+        String fromMdc = TraceUtil.getCorrelationId();
         return fromMdc != null ? fromMdc : orderId;
     }
 }

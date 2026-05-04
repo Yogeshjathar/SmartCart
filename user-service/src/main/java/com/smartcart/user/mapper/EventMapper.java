@@ -3,18 +3,18 @@ package com.smartcart.user.mapper;
 import com.smartcart.common.event.AggregateType;
 import com.smartcart.common.event.EventType;
 import com.smartcart.common.event.UserCreatedEvent;
+import com.smartcart.common.util.TraceUtil;
 import com.smartcart.user.entity.User;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.UUID;
 
+@Component
 public class EventMapper {
     @Value("${spring.application.name}")
     private String serviceName;
-    String traceId = MDC.get("traceId");
-    String correlationId = MDC.get("correlationId");
 
     public UserCreatedEvent buildUserCreatedEvent(User user){
 
@@ -25,8 +25,9 @@ public class EventMapper {
                 .aggregateType(AggregateType.USER)
                 .occurredAt(Instant.now())
                 .version("v1")
-                .traceId(traceId)
-                .correlationId(correlationId)
+                .traceId(TraceUtil.getTraceId())
+                .spanId(TraceUtil.getSpanId())
+                .correlationId(TraceUtil.resolveCorrelationId(null))
                 .source(serviceName)
                 .email(user.getEmail())
                 .role(user.getRole())

@@ -1,9 +1,9 @@
 package com.smartcart.common.exception;
 
 import com.smartcart.common.response.ApiResponse;
+import com.smartcart.common.util.TraceUtil;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
         log.warn(
                 "Handled business exception | errorCode={} | traceId={} | message={}",
                 ex.getErrorCode(),
-                MDC.get("traceId"),
+                TraceUtil.getTraceId(),
                 ex.getMessage(),
                 ex
         );
@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneric(Exception ex) {
 
-        log.error("Unhandled exception | traceId={}", MDC.get("traceId"), ex);
+        log.error("Unhandled exception | traceId={}", TraceUtil.getTraceId(), ex);
 
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,

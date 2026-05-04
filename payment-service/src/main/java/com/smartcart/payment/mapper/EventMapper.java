@@ -5,6 +5,7 @@ import com.smartcart.common.event.EventType;
 import com.smartcart.common.event.InventoryReservedEvent;
 import com.smartcart.common.event.PaymentFailedEvent;
 import com.smartcart.common.event.PaymentSuccessEvent;
+import com.smartcart.common.util.TraceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class EventMapper {
                 .aggregateType(AggregateType.ORDER)
                 .occurredAt(Instant.now())
                 .traceId(inventoryEvent.getTraceId())
+                .spanId(TraceUtil.getSpanId())
                 .version("1.0")
                 .correlationId(resolveCorrelationId(inventoryEvent))
                 .source(serviceName)
@@ -44,6 +46,7 @@ public class EventMapper {
                 .aggregateType(AggregateType.ORDER)
                 .occurredAt(Instant.now())
                 .traceId(inventoryEvent.getTraceId())
+                .spanId(TraceUtil.getSpanId())
                 .version("1.0")
                 .correlationId(resolveCorrelationId(inventoryEvent))
                 .source(serviceName)

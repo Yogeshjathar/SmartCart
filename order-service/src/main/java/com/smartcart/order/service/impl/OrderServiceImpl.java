@@ -5,7 +5,9 @@ import com.smartcart.common.event.OrderCreatedEvent;
 import com.smartcart.common.exception.ConflictException;
 import com.smartcart.common.exception.ErrorCode;
 import com.smartcart.common.exception.ResourceNotFoundException;
+import com.smartcart.common.util.TraceUtil;
 import com.smartcart.order.dto.CreateOrderRequest;
+import com.smartcart.order.dto.OrderWorkflowResponse;
 import com.smartcart.order.entity.Order;
 import com.smartcart.order.entity.OrderItem;
 import com.smartcart.order.entity.OrderStatus;
@@ -48,6 +50,12 @@ public class OrderServiceImpl implements OrderService {
                 .status(OrderStatus.CREATED)
                 .paymentStatus(PaymentStatus.NOT_STARTED)
                 .currency(request.getCurrency())
+                .correlationId(TraceUtil.resolveCorrelationId(null))
+                .traceId(TraceUtil.getTraceId())
+                .lastSpanId(TraceUtil.getSpanId())
+                .lastEventType("ORDER_CREATE_REQUEST_ACCEPTED")
+                .lastEventSource("order-service")
+                .workflowUpdatedAt(Instant.now())
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -76,6 +84,13 @@ public class OrderServiceImpl implements OrderService {
 
         OrderCreatedEvent event = eventMapper.buildOrderCreatedEvent(saved);
         eventProducer.publish(event);
+
+        saved.setTraceId(event.getTraceId());
+        saved.setLastSpanId(event.getSpanId());
+        saved.setLastEventId(event.getEventId());
+        saved.setLastEventType(event.getEventType().name());
+        saved.setLastEventSource(event.getSource());
+        saved.setWorkflowUpdatedAt(event.getOccurredAt());
 
         return saved;
     }
@@ -120,6 +135,36 @@ public class OrderServiceImpl implements OrderService {
         OrderCancelledEvent event = eventMapper.buildOrderCancelledEvent(savedOrder);
         eventProducer.publish(event);
 
+        savedOrder.setTraceId(event.getTraceId());
+        savedOrder.setLastSpanId(event.getSpanId());
+        savedOrder.setLastEventId(event.getEventId());
+        savedOrder.setLastEventType(event.getEventType().name());
+        savedOrder.setLastEventSource(event.getSource());
+        savedOrder.setWorkflowUpdatedAt(event.getOccurredAt());
+
         return savedOrder;
+    }
+
+    @Override
+    public OrderWorkflowResponse getOrderWorkflow(UUID orderId) {
+        Order order = getOrder(orderId);
+
+        return OrderWorkflowResponse.builder()
+                .orderId(order.getId())
+                .userId(order.getUserId())
+                .orderStatus(order.getStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .totalAmount(order.getTotalAmount())
+                .currency(order.getCurrency())
+                .correlationId(order.getCorrelationId())
+                .traceId(order.getTraceId())
+                .lastSpanId(order.getLastSpanId())
+                .lastEventId(order.getLastEventId())
+                .lastEventType(order.getLastEventType())
+                .lastEventSource(order.getLastEventSource())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .workflowUpdatedAt(order.getWorkflowUpdatedAt())
+                .build();
     }
 }

@@ -2,6 +2,7 @@ package com.smartcart.order.controller;
 
 import com.smartcart.common.response.ApiResponse;
 import com.smartcart.order.dto.CreateOrderRequest;
+import com.smartcart.order.dto.OrderWorkflowResponse;
 import com.smartcart.order.entity.Order;
 import com.smartcart.order.service.OrderService;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
@@ -32,6 +34,11 @@ public class OrderController {
     @GetMapping("/user/{userId}")
     public List<Order> getUserOrders(@PathVariable String userId) {
         return orderService.getOrdersByUser(userId);
+    }
+
+    @GetMapping("/{orderId}/workflow")
+    public OrderWorkflowResponse getOrderWorkflow(@PathVariable UUID orderId) {
+        return orderService.getOrderWorkflow(orderId);
     }
 
     @PutMapping("/{orderId}/cancel")

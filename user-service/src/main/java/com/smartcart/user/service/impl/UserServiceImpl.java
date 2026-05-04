@@ -1,13 +1,12 @@
 package com.smartcart.user.service.impl;
 
 import com.smartcart.common.dto.UserAuthDetails;
-import com.smartcart.common.event.AggregateType;
-import com.smartcart.common.event.EventType;
 import com.smartcart.common.event.UserCreatedEvent;
 import com.smartcart.common.exception.ConflictException;
 import com.smartcart.common.exception.ErrorCode;
 import com.smartcart.common.exception.ResourceNotFoundException;
 import com.smartcart.common.response.ApiResponse;
+import com.smartcart.user.mapper.EventMapper;
 import com.smartcart.user.dto.UserRequest;
 import com.smartcart.user.dto.UserResponse;
 import com.smartcart.user.entity.User;
@@ -19,9 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +27,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserEventProducer userEventProducer;
+    private final EventMapper eventMapper;
 
     @Override
     @Transactional
@@ -57,21 +55,7 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-        // 🔥 Build UserCreatedEvent (Production Style)
-        UserCreatedEvent event = UserCreatedEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .eventType(EventType.USER_CREATED)
-                .aggregateId(savedUser.getId().toString())
-                .aggregateType(AggregateType.USER)
-                .occurredAt(Instant.now())
-                .version("v1")
-                .traceId(UUID.randomUUID().toString())        // ideally from tracing context
-                .correlationId(UUID.randomUUID().toString())  // ideally from request header
-                .source("user-service")
-                .email(savedUser.getEmail())
-                .role(savedUser.getRole())
-                .status(savedUser.getStatus())
-                .build();
+        UserCreatedEvent event = eventMapper.buildUserCreatedEvent(savedUser);
 
         // 🔥 Publish Event
         userEventProducer.publish(event);

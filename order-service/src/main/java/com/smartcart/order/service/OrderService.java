@@ -1,6 +1,7 @@
 package com.smartcart.order.service;
 
 import com.smartcart.order.dto.CreateOrderRequest;
+import com.smartcart.order.dto.OrderWorkflowResponse;
 import com.smartcart.order.entity.Order;
 
 import java.util.List;
@@ -15,4 +16,6 @@ public interface OrderService {
     List<Order> getOrdersByUser(String userId);
 
     Order cancelOrder(UUID orderId);
+
+    OrderWorkflowResponse getOrderWorkflow(UUID orderId);
 }

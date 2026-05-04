@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jdk
 WORKDIR /app
 
 # Copy the built jar file into the container
-COPY target/*.jar app.jar
+COPY target/*-1.0.0.jar app.jar
 
 EXPOSE 8087
 

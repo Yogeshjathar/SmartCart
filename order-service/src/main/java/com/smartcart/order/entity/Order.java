@@ -34,6 +34,20 @@ public class Order {
 
     private String currency;
 
+    private String correlationId;
+
+    private String traceId;
+
+    private String lastSpanId;
+
+    private String lastEventId;
+
+    private String lastEventType;
+
+    private String lastEventSource;
+
+    private Instant workflowUpdatedAt;
+
     private Instant createdAt;
 
     private Instant updatedAt;

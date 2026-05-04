@@ -6,9 +6,11 @@ import com.smartcart.common.event.OrderCancelledEvent;
 import com.smartcart.common.event.PaymentFailedEvent;
 import com.smartcart.common.event.PaymentSuccessEvent;
 import com.smartcart.common.kafka.KafkaTopics;
+import com.smartcart.common.util.KafkaTraceUtil;
 import com.smartcart.inventory.mapper.EventMapper;
 import com.smartcart.inventory.producer.EventProducer;
 import com.smartcart.inventory.service.InventoryService;
+import io.micrometer.tracing.Tracer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ public class OrderEventConsumer {
     private final InventoryService inventoryService;
     private final EventMapper eventMapper;
     private final EventProducer eventProducer;
+    private final Tracer tracer;
 
     @KafkaListener(
             topics = KafkaTopics.ORDER_CREATED,
@@ -32,55 +35,57 @@ public class OrderEventConsumer {
             containerFactory = "orderCreatedKafkaListenerContainerFactory"
     )
     public void handleOrderCreated(ConsumerRecord<String, OrderCreatedEvent> record) {
-        OrderCreatedEvent event = record.value();
-
-        log.info(
-                "Received ORDER_CREATED event | orderId={} | eventId={} | partition={} | offset={}",
-                event.getOrderId(),
-                event.getEventId(),
-                record.partition(),
-                record.offset()
-        );
-
-        int reservedItems = 0;
-
-        try {
-            for (OrderItemPayload item : event.getItems()) {
-                log.info(
-                        "Reserving stock | productId={} | quantity={}",
-                        item.getProductId(),
-                        item.getQuantity()
-                );
-
-                inventoryService.reserveStock(
-                        item.getProductId(),
-                        item.getQuantity()
-                );
-
-                reservedItems++;
-            }
-
-            eventProducer.publish(eventMapper.buildInventoryReservedEvent(event));
+        KafkaTraceUtil.runWithConsumerSpan(tracer, record, "inventory.order-created", () -> {
+            OrderCreatedEvent event = record.value();
 
             log.info(
-                    "Inventory reserved successfully for created order | orderId={}",
-                    event.getOrderId()
-            );
-
-        } catch (Exception ex) {
-            compensateReservation(event, reservedItems);
-
-            eventProducer.publish(
-                    eventMapper.buildInventoryReservationFailedEvent(event, ex.getMessage())
-            );
-
-            log.error(
-                    "Failed to process ORDER_CREATED event | orderId={} | eventId={}",
+                    "Received ORDER_CREATED event | orderId={} | eventId={} | partition={} | offset={}",
                     event.getOrderId(),
                     event.getEventId(),
-                    ex
+                    record.partition(),
+                    record.offset()
             );
-        }
+
+            int reservedItems = 0;
+
+            try {
+                for (OrderItemPayload item : event.getItems()) {
+                    log.info(
+                            "Reserving stock | productId={} | quantity={}",
+                            item.getProductId(),
+                            item.getQuantity()
+                    );
+
+                    inventoryService.reserveStock(
+                            item.getProductId(),
+                            item.getQuantity()
+                    );
+
+                    reservedItems++;
+                }
+
+                eventProducer.publish(eventMapper.buildInventoryReservedEvent(event));
+
+                log.info(
+                        "Inventory reserved successfully for created order | orderId={}",
+                        event.getOrderId()
+                );
+
+            } catch (Exception ex) {
+                compensateReservation(event, reservedItems);
+
+                eventProducer.publish(
+                        eventMapper.buildInventoryReservationFailedEvent(event, ex.getMessage())
+                );
+
+                log.error(
+                        "Failed to process ORDER_CREATED event | orderId={} | eventId={}",
+                        event.getOrderId(),
+                        event.getEventId(),
+                        ex
+                );
+            }
+        });
     }
 
     @KafkaListener(
@@ -89,49 +94,50 @@ public class OrderEventConsumer {
             containerFactory = "orderCancelledKafkaListenerContainerFactory"
     )
     public void handleOrderCancelled(ConsumerRecord<String, OrderCancelledEvent> record) {
-
-        OrderCancelledEvent event = record.value();
-
-        log.info(
-                "Received ORDER_CANCELLED event | orderId={} | eventId={} | partition={} | offset={}",
-                event.getOrderId(),
-                event.getEventId(),
-                record.partition(),
-                record.offset()
-        );
-
-        try {
-
-            for (OrderItemPayload item : event.getItems()) {
-
-                log.info(
-                        "Releasing stock | productId={} | quantity={}",
-                        item.getProductId(),
-                        item.getQuantity()
-                );
-
-                inventoryService.releaseStock(
-                        item.getProductId(),
-                        item.getQuantity()
-                );
-            }
+        KafkaTraceUtil.runWithConsumerSpan(tracer, record, "inventory.order-cancelled", () -> {
+            OrderCancelledEvent event = record.value();
 
             log.info(
-                    "Inventory updated successfully for cancelled order | orderId={}",
-                    event.getOrderId()
-            );
-
-        } catch (Exception ex) {
-
-            log.error(
-                    "Failed to process ORDER_CANCELLED event | orderId={} | eventId={}",
+                    "Received ORDER_CANCELLED event | orderId={} | eventId={} | partition={} | offset={}",
                     event.getOrderId(),
                     event.getEventId(),
-                    ex
+                    record.partition(),
+                    record.offset()
             );
 
-            throw ex; // let Kafka retry
-        }
+            try {
+
+                for (OrderItemPayload item : event.getItems()) {
+
+                    log.info(
+                            "Releasing stock | productId={} | quantity={}",
+                            item.getProductId(),
+                            item.getQuantity()
+                    );
+
+                    inventoryService.releaseStock(
+                            item.getProductId(),
+                            item.getQuantity()
+                    );
+                }
+
+                log.info(
+                        "Inventory updated successfully for cancelled order | orderId={}",
+                        event.getOrderId()
+                );
+
+            } catch (Exception ex) {
+
+                log.error(
+                        "Failed to process ORDER_CANCELLED event | orderId={} | eventId={}",
+                        event.getOrderId(),
+                        event.getEventId(),
+                        ex
+                );
+
+                throw ex;
+            }
+        });
     }
 
     @KafkaListener(
@@ -140,18 +146,20 @@ public class OrderEventConsumer {
             containerFactory = "paymentSuccessKafkaListenerContainerFactory"
     )
     public void handlePaymentSuccess(ConsumerRecord<String, PaymentSuccessEvent> record) {
-        PaymentSuccessEvent event = record.value();
+        KafkaTraceUtil.runWithConsumerSpan(tracer, record, "inventory.payment-success", () -> {
+            PaymentSuccessEvent event = record.value();
 
-        try {
-            for (OrderItemPayload item : event.getItems()) {
-                inventoryService.confirmStock(item.getProductId(), item.getQuantity());
+            try {
+                for (OrderItemPayload item : event.getItems()) {
+                    inventoryService.confirmStock(item.getProductId(), item.getQuantity());
+                }
+
+                log.info("Inventory confirmed for paid order | orderId={}", event.getOrderId());
+            } catch (Exception ex) {
+                log.error("Failed to confirm inventory for paid order | orderId={}", event.getOrderId(), ex);
+                throw ex;
             }
-
-            log.info("Inventory confirmed for paid order | orderId={}", event.getOrderId());
-        } catch (Exception ex) {
-            log.error("Failed to confirm inventory for paid order | orderId={}", event.getOrderId(), ex);
-            throw ex;
-        }
+        });
     }
 
     @KafkaListener(
@@ -160,18 +168,20 @@ public class OrderEventConsumer {
             containerFactory = "paymentFailedKafkaListenerContainerFactory"
     )
     public void handlePaymentFailed(ConsumerRecord<String, PaymentFailedEvent> record) {
-        PaymentFailedEvent event = record.value();
+        KafkaTraceUtil.runWithConsumerSpan(tracer, record, "inventory.payment-failed", () -> {
+            PaymentFailedEvent event = record.value();
 
-        try {
-            for (OrderItemPayload item : event.getItems()) {
-                inventoryService.releaseStock(item.getProductId(), item.getQuantity());
+            try {
+                for (OrderItemPayload item : event.getItems()) {
+                    inventoryService.releaseStock(item.getProductId(), item.getQuantity());
+                }
+
+                log.info("Inventory released after payment failure | orderId={}", event.getOrderId());
+            } catch (Exception ex) {
+                log.error("Failed to release inventory after payment failure | orderId={}", event.getOrderId(), ex);
+                throw ex;
             }
-
-            log.info("Inventory released after payment failure | orderId={}", event.getOrderId());
-        } catch (Exception ex) {
-            log.error("Failed to release inventory after payment failure | orderId={}", event.getOrderId(), ex);
-            throw ex;
-        }
+        });
     }
 
     private void compensateReservation(OrderCreatedEvent event, int reservedItems) {

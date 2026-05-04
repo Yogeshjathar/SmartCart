@@ -1,6 +1,5 @@
 package com.smartcart.gateway.config;
 
-import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.stereotype.Component;
@@ -12,29 +11,28 @@ import java.util.UUID;
 @Component
 public class CorrelationIdFilter implements GlobalFilter {
 
-    private static final String HEADER = "X-Correlation-Id";
-    private static final String MDC_KEY = "correlationId";
+    private static final String CORRELATION_HEADER = "X-Correlation-Id";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
         String correlationId = exchange.getRequest()
                 .getHeaders()
-                .getFirst(HEADER);
+                .getFirst(CORRELATION_HEADER);
 
         if (correlationId == null || correlationId.isBlank()) {
             correlationId = UUID.randomUUID().toString();
         }
 
-        MDC.put(MDC_KEY, correlationId);
-
         String finalCorrelationId = correlationId;
 
         ServerWebExchange mutatedExchange = exchange.mutate()
-                .request(builder -> builder.header(HEADER, finalCorrelationId))
+                .request(builder -> builder.header(CORRELATION_HEADER, finalCorrelationId))
                 .build();
 
         return chain.filter(mutatedExchange)
-                .doFinally(signal -> MDC.clear());
+                .then(Mono.fromRunnable(() ->
+                        mutatedExchange.getResponse().getHeaders().set(CORRELATION_HEADER, finalCorrelationId)
+                ));
     }
 }

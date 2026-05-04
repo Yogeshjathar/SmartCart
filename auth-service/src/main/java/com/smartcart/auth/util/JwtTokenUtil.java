@@ -21,10 +21,17 @@ public class JwtTokenUtil {
     public String generateAccessToken(UserAuthDetails user) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtRsaProperties.getAccessTokenExpiration());
+        String displayName = String.join(" ",
+                        user.getFirstName() == null ? "" : user.getFirstName().trim(),
+                        user.getLastName() == null ? "" : user.getLastName().trim())
+                .trim();
 
         return Jwts.builder()
                 .setSubject(user.getId().toString())
                 .claim("roles", user.getRole())
+                .claim("firstName", user.getFirstName())
+                .claim("lastName", user.getLastName())
+                .claim("name", displayName.isEmpty() ? user.getEmail() : displayName)
                 .setIssuer(jwtRsaProperties.getIssuer())
                 .setIssuedAt(now)
                 .setExpiration(expiry)

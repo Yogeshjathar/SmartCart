@@ -24,14 +24,12 @@ public class KafkaLoggingAspect {
     // Intercept all KafkaTemplate.send() calls
     @Before("execution(* org.springframework.kafka.core.KafkaTemplate.send(..)) && args(topic, message)")
     public void logKafkaSend(String topic, Object message) {
-
-        String traceId = TraceUtil.getTraceId();
-        String correlationId = MDC.get("correlationId");
-
-        // Create OT span for Kafka produce
         Span kafkaSpan = tracer.nextSpan().name("KafkaSend:" + topic).start();
 
         try (Tracer.SpanInScope ws = tracer.withSpan(kafkaSpan)) {
+            TraceUtil.syncFromTracer(tracer);
+            String traceId = TraceUtil.currentTraceId(tracer);
+            String correlationId = MDC.get(TraceUtil.CORRELATION_ID);
 
             String payload = JsonUtil.convertToJson(message);
 
