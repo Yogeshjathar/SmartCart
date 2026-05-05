@@ -1,94 +1,169 @@
-# SmartCart – Order Flow
+# Order Flow
 
-## Order Lifecycle
-CREATED
+## Scope
 
-↓
+This document describes the current implemented order workflow across `order-service`, `inventory-service`, `payment-service`, and `notification-service`.
 
-RESERVED (Inventory reserved)
+## Workflow summary
 
-↓
+SmartCart uses an event-driven checkout flow. The order record is created synchronously, but stock reservation, payment outcome, and user notification are progressed asynchronously through Kafka events.
 
-PAYMENT_PENDING
+## Status model
 
-↓
+### Order status
 
-CONFIRMED (Payment success)
+- `CREATED`
+- `RESERVED`
+- `CONFIRMED`
+- `FAILED`
+- `CANCELLED`
 
-↓
+### Payment status
 
-COMPLETED (Later stage)
+- `NOT_STARTED`
+- `INITIATED`
+- `SUCCESS`
+- `FAILED`
 
-OR
+## Happy path
 
-FAILED / CANCELLED
+### Step 1. Create order
 
-## Step-by-Step Order Placement
+Client sends `POST /api/v1/orders` through the gateway.
 
-1. User authenticates via Auth Service.
-2. User places order through API Gateway.
-3. Gateway validates JWT.
-4. Order Service creates order (PENDING state).
-5. Order Service calls Inventory Service to reserve stock.
-6. Inventory confirms reservation.
-7. Order Service calls Payment Service.
-8. Payment confirms transaction.
-9. Order status updated to CONFIRMED.
-10. Notification Service sends confirmation email.
+`order-service`:
 
----
+- validates and maps the request
+- creates `Order` and `OrderItem` records
+- sets workflow metadata such as correlation ID and trace ID
+- stores initial state:
+  - order status = `CREATED`
+  - payment status = `NOT_STARTED`
+- publishes `ORDER_CREATED`
 
----
+### Step 2. Reserve inventory
 
-# Checkout Flow (SAGA Pattern – Orchestration)
+`inventory-service` listens to `ORDER_CREATED`.
 
-## Step 1: Create Order
+For each order item it:
 
-Client → Order Service → Create Order
+- loads inventory by `productId`
+- verifies `availableQuantity >= requested quantity`
+- decrements available stock
+- increments reserved stock
 
-- Order status = `CREATED`
+If all items are reserved successfully:
 
----
+- publish `INVENTORY_RESERVED`
 
-## Step 2: Reserve Inventory
+If any item fails:
 
-Order Service → Inventory Service → Reserve Stock
+- compensate any already-reserved items for the same order
+- publish `INVENTORY_RESERVATION_FAILED`
 
-### If Success:
-- Update order status = `RESERVED`
+### Step 3. Initiate and process payment
 
-### If Failure:
-- Update order status = `FAILED`
-- Stop process
+`payment-service` listens to `INVENTORY_RESERVED`.
 
----
+It:
 
-## Step 3: Initiate Payment
+- checks whether a payment already exists for the order
+- creates a payment record in `PROCESSING`
+- simulates gateway success with an 80% success rate
+- publishes either:
+  - `PAYMENT_SUCCESS`
+  - `PAYMENT_FAILED`
 
-Order Service → Payment Service → Initiate Payment
-- Update order status = `PAYMENT_PENDING`
+### Step 4. Update order workflow state
 
-### If Payment Success:
-- Update order status = `CONFIRMED`
-- Call Inventory Service → Confirm Stock
-- Publish Order Confirmed Event
-- Later → Update status = `COMPLETED`
+`order-service` listens to:
 
-### If Payment Failure:
-- Call Inventory Service → Release Stock
-- Update order status = `FAILED`
-- Publish Order Failed Event
-- Stop process
+- `INVENTORY_RESERVED`
+- `INVENTORY_RESERVATION_FAILED`
+- `PAYMENT_SUCCESS`
+- `PAYMENT_FAILED`
 
-## Failure Scenarios
+State transitions:
 
-- Inventory failure → Order cancelled.
-- Payment failure → Inventory released.
-- Notification failure → Logged but order not rolled back.
+| Event | Order status | Payment status |
+|---|---|---|
+| `INVENTORY_RESERVED` | `RESERVED` | `INITIATED` |
+| `INVENTORY_RESERVATION_FAILED` | `FAILED` | `NOT_STARTED` |
+| `PAYMENT_SUCCESS` | `CONFIRMED` | `SUCCESS` |
+| `PAYMENT_FAILED` | `FAILED` | `FAILED` |
 
----
+### Step 5. Finalize inventory
 
-## Future Improvement
+`inventory-service` also listens to payment outcome events.
 
-- Replace synchronous calls with Kafka events.
-- Implement Saga Pattern for distributed transactions.
+On `PAYMENT_SUCCESS`:
+
+- reserved stock is confirmed
+- reserved quantity is reduced permanently
+
+On `PAYMENT_FAILED`:
+
+- reserved stock is released
+- available quantity is restored
+
+### Step 6. Notify the user
+
+`notification-service` listens to:
+
+- `ORDER_CREATED`
+- `PAYMENT_SUCCESS`
+- `PAYMENT_FAILED`
+
+It creates MongoDB notification records and simulates sending.
+
+## Cancellation flow
+
+Client sends `PUT /api/v1/orders/{orderId}/cancel`.
+
+`order-service`:
+
+- rejects cancellation for `CONFIRMED` or `FAILED` orders
+- returns immediately for already cancelled orders
+- marks order `CANCELLED`
+- publishes `ORDER_CANCELLED`
+
+`inventory-service` listens to `ORDER_CANCELLED` and releases reserved stock for all order items.
+
+## Traceability model
+
+The `Order` entity stores workflow metadata:
+
+- `correlationId`
+- `traceId`
+- `lastSpanId`
+- `lastEventId`
+- `lastEventType`
+- `lastEventSource`
+- `workflowUpdatedAt`
+
+This allows the UI and developers to inspect the latest workflow state from the order itself.
+
+## Failure behavior
+
+### Inventory reservation failure
+
+- order becomes `FAILED`
+- payment is never started
+
+### Payment failure
+
+- order becomes `FAILED`
+- inventory is released
+- notification is still attempted
+
+### Notification failure
+
+- notification record is marked `FAILED`
+- order is not rolled back
+
+## Current implementation notes
+
+- The workflow is asynchronous and event-driven now, not “future Kafka”
+- There is no DLQ or explicit retry policy yet
+- Payment is simulated, not integrated with a real provider
+- Inventory reservation is implemented per item with compensation if a later item fails

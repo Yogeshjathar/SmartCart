@@ -1,168 +1,164 @@
-# 🛒 SmartCart Microservices Platform
+# SmartCart
 
-SmartCart is a scalable, cloud-native e-commerce platform built using Spring Boot and Spring Cloud microservices architecture.
+SmartCart is a multi-service e-commerce platform built with Spring Boot, Spring Cloud, Kafka, PostgreSQL, MongoDB, and React. It is designed as a working microservices foundation with a real checkout workflow, centralized authentication, service discovery, observability, and a developer-facing frontend.
 
----
+## What exists today
 
-## 🏗 Architecture Overview
+- API Gateway with JWT enforcement for protected routes
+- Eureka service discovery
+- Auth service with RSA-signed JWT and JWKS endpoint
+- User registration and auth lookup
+- Product catalog in MongoDB
+- Inventory reservation and stock confirmation in PostgreSQL
+- Order workflow backed by Kafka events
+- Mock payment processing
+- Notification persistence and simulated delivery
+- Frontend for login, catalog, cart, checkout, order tracking, and admin inventory/product actions
+- Metrics, tracing, Swagger aggregation, and correlation IDs
 
-SmartCart follows a distributed microservices architecture:
+## Architecture
 
-- Discovery Server (Eureka)
-- API Gateway
-- Auth Service
-- User Service
-- Product Service
-- Inventory Service
-- Order Service
-- Payment Service
-- Notification Service
-- Shared Common Library
+External traffic enters through `api-gateway` on port `8080`.
 
----
+Core backend modules:
 
-## ⚙️ Tech Stack
+- `discovery-server`
+- `api-gateway`
+- `auth-service`
+- `user-service`
+- `product-service`
+- `inventory-service`
+- `order-service`
+- `payment-service`
+- `notification-service`
+- `smartcart-common`
 
-- Java 21+
-- Spring Boot
-- Spring Cloud (Eureka, OpenFeign)
+Data ownership:
+
+- PostgreSQL: `user-service`, `inventory-service`, `order-service`, `payment-service`
+- MongoDB: `product-service`, `notification-service`
+
+Workflow pattern:
+
+1. `order-service` creates the order and publishes `ORDER_CREATED`
+2. `inventory-service` reserves stock and publishes either `INVENTORY_RESERVED` or `INVENTORY_RESERVATION_FAILED`
+3. `payment-service` listens for reserved inventory and publishes either `PAYMENT_SUCCESS` or `PAYMENT_FAILED`
+4. `order-service` updates workflow state from those events
+5. `notification-service` persists and simulates user notifications
+
+## Tech stack
+
+- Java 21
+- Spring Boot 3.4.6
+- Spring Cloud 2024.0.1
 - Spring Security
-- Maven (Multi-module)
-- Lombok
-- Micrometer + Prometheus
-- Grafana
-- OpenTelemetry + zipkin
-- JUnit + Mockito
-- Docker
-- Kubernetes (Future-ready)
+- Spring Cloud Gateway
+- Spring Cloud OpenFeign
+- Spring Kafka
+- Spring Data JPA
+- Spring Data MongoDB
+- Maven multi-module build
+- React 18 + Vite
+- Kafka, PostgreSQL, MongoDB, Redis
+- Micrometer, Prometheus, Grafana, Zipkin
 
----
+## Local development
 
-## 📁 Project Structure
+### Prerequisites
 
-smartcart-parent  
-├── smartcart-common  
-├── discovery-server  
-├── api-gateway  
-├── auth-service  
-├── user-service  
-├── product-service  
-├── inventory-service  
-├── order-service  
-├── payment-service  
-└── notification-service
+- Java 21
+- Maven or `mvnw`
+- Docker Desktop or equivalent
+- Node.js for the frontend
 
----
+### Start infrastructure and services
 
-## Features include:
-- User registration and authentication (JWT)
-- Product catalog management
-- Inventory tracking
-- Order processing
-- Payment integration (mocked)
-- Notification system (email/SMS)
-- Centralized API documentation (Swagger)
-- Service discovery (Eureka)
-- Inter-service communication (OpenFeign)
-- Centralized logging
-- Monitoring and tracing (Micrometer, Prometheus, Grafana, OpenTelemetry)
-
----
-
-## 🚀 Running Locally
-
-1. Build all modules:
-   `mvn clean install`
-
-2. Start services in order:
-    - discovery-server
-    - api-gateway
-    - other services
-
-
-3. Access:
-
-   Eureka Dashboard → http://localhost:8761  
-   Gateway → http://localhost:8080
-
-   Auth Service → http://localhost:8081  
-   User Service → http://localhost:8082  
-   Product Service → http://localhost:8083  
-   Inventory Service → http://localhost:8084  
-   Order Service → http://localhost:8085  
-   Payment Service → http://localhost:8086  
-   Notification Service → http://localhost:8087
-
-
-4. Monitoring:
-
-   - Prometheus → http://localhost:9090
-   - Grafana → http://localhost:3000
-   - zipkin → http://localhost:9411
-
-> Note: In production, individual services are not accessed directly. All external traffic flows through the API Gateway.
----
-
-# SmartCart API Documentation
-
-## Overview
-
-SmartCart is built using a **microservices architecture**, where each service exposes its own REST APIs.  
-To simplify API discovery and improve the developer experience, we implemented **centralized API documentation using Swagger (OpenAPI)**.
-
-Instead of hosting Swagger UI separately for every service, all API specifications are **aggregated through the API Gateway**, allowing developers to access documentation from a **single interface**.
-
-This approach is widely used in **large-scale distributed systems** to manage APIs efficiently.
-
----
-
-## API Documentation Strategy
-
-Each microservice generates its own **OpenAPI specification**, which is then aggregated by the **API Gateway**.
-
-### API Definitions
-
-Each service exposes its OpenAPI specification through the API Gateway.
-
-| Service | OpenAPI Endpoint |
-|--------|------------------|
-| Auth Service | http://localhost:8080/v3/api-docs/auth-service |
-| User Service | http://localhost:8080/v3/api-docs/user-service |
-| Product Service | http://localhost:8080/v3/api-docs/product-service |
-| Order Service | http://localhost:8080/v3/api-docs/order-service |
-| Inventory Service | http://localhost:8080/v3/api-docs/inventory-service |
-| Payment Service | http://localhost:8080/v3/api-docs/payment-service |
-| Notification Service | http://localhost:8080/v3/api-docs/notification-service |
-
-### Swagger UI
-
-Access the unified Swagger UI: http://localhost:8080/swagger-ui.html
-
----
-
-### Start SmartCart
-#### To start the SmartCart platform using Docker Compose, run the following command in the terminal:
-```bash
-docker compose -f docker-compose.infra.yml -f docker-compose.services.yml up -d
-```
-
-You can also run using Makefile:
 ```bash
 make up
+```
+
+Useful alternatives:
+
+```bash
+make infra-up
+make services-up
 make logs
 make down
 ```
-### Then to start all services without infrastructure components (like Prometheus, Grafana, zipkin), run:
+
+### Backend entry points
+
+- Gateway: `http://localhost:8080`
+- Eureka: `http://localhost:8761`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- AKHQ: `http://localhost:9191`
+- Prometheus: `http://localhost:9095`
+- Grafana: `http://localhost:3000`
+- Zipkin: `http://localhost:9411`
+
+### Frontend
+
 ```bash
-docker compose -f docker-compose.services.yml up -d
+cd frontend
+npm install
+npm run dev
 ```
 
----
-## 📌 Future Improvements
+Frontend dev server:
 
-- CI/CD pipeline
-- Kubernetes deployment
-- Resilience4j circuit breaker, rate limiting, and retry mechanisms
+- UI: `http://localhost:5173`
 
-## 👨‍💻 Author
-YOGESH JATHAR
+The frontend proxies `/api` to `http://localhost:8080`.
+
+## Main API routes through the gateway
+
+- `POST /api/v1/users/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/products`
+- `GET /api/v1/products/{id}`
+- `POST /api/v1/products`
+- `GET /api/v1/inventory/{productId}`
+- `POST /api/v1/inventory`
+- `POST /api/v1/orders`
+- `GET /api/v1/orders/{orderId}`
+- `GET /api/v1/orders/user/{userId}`
+- `GET /api/v1/orders/{orderId}/workflow`
+- `PUT /api/v1/orders/{orderId}/cancel`
+- `GET /api/v1/payments/order/{orderId}`
+- `GET /api/v1/notifications/user/{userId}`
+
+## Documentation
+
+The source-of-truth project documentation lives under [`docs/`](./docs/README.md).
+
+Recommended reading order:
+
+1. [`docs/architecture.md`](./docs/architecture.md)
+2. [`docs/service-catalog.md`](./docs/service-catalog.md)
+3. [`docs/api-contracts.md`](./docs/api-contracts.md)
+4. [`docs/order-flow.md`](./docs/order-flow.md)
+5. [`docs/security-authentication.md`](./docs/security-authentication.md)
+6. [`docs/operations-runbook.md`](./docs/operations-runbook.md)
+7. [`docs/smartcart-developer-guide.md`](./docs/smartcart-developer-guide.md)
+
+## Current scope and known gaps
+
+SmartCart is a strong working platform, but it is not yet production-complete.
+
+Current gaps include:
+
+- mock payment instead of real PSP integration
+- simulated notification delivery
+- no persisted idempotency-key handling
+- no DLQ or retry policy for failed Kafka consumers
+- limited automated tests beyond application context coverage
+- product and user domains are intentionally narrower than a full commerce platform
+
+## Direction for next work
+
+- stronger test coverage around the order workflow
+- idempotency and retry handling
+- admin authorization hardening
+- product search, pagination, update, and delete flows
+- outbox or transactional event publishing pattern
+- CI/CD and container orchestration
