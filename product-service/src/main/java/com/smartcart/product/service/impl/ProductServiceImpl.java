@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Service
@@ -37,6 +38,15 @@ public class ProductServiceImpl implements ProductService {
 
         meterRegistry.counter("product.create.request").increment();
 
+        String normalizedSku = normalizeSku(request.getSku());
+
+        if (repository.existsBySkuIgnoreCase(normalizedSku)) {
+            log.warn("Duplicate product SKU detected: {}", normalizedSku);
+            throw new ConflictException(
+                    String.format("Product SKU already exists: %s", normalizedSku)
+            );
+        }
+
         if (repository.existsByNameAndBrand(request.getName(), request.getBrand())) {
             log.warn("Duplicate product detected: {} - {}", request.getName(), request.getBrand());
             throw new ConflictException(
@@ -45,6 +55,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product product = Product.builder()
+                .sku(normalizedSku)
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
@@ -100,5 +111,21 @@ public class ProductServiceImpl implements ProductService {
         meterRegistry.counter("product.fetch.all").increment();
 
         return repository.findAll();
+    }
+
+    private String normalizeSku(String rawSku) {
+        String normalized = rawSku == null
+                ? ""
+                : rawSku.trim()
+                .toUpperCase(Locale.ROOT)
+                .replaceAll("[^A-Z0-9]+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("^-|-$", "");
+
+        if (normalized.isBlank()) {
+            throw new ConflictException("Product SKU is required");
+        }
+
+        return normalized;
     }
 }

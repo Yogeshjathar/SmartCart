@@ -23,6 +23,7 @@ public class ProductCatalogSeedConfig {
                     .filter(item -> !productRepository.existsById(item.productId()))
                     .map(item -> Product.builder()
                             .id(item.productId())
+                            .sku(generateSeedSku(item.productId()))
                             .name(item.name())
                             .description(item.description())
                             .price(item.price())
@@ -43,5 +44,30 @@ public class ProductCatalogSeedConfig {
             productRepository.saveAll(missingProducts);
             log.info("Seeded {} products into catalog", missingProducts.size());
         };
+    }
+
+    @Bean
+    ApplicationRunner legacyProductSkuBackfill(ProductRepository productRepository) {
+        return args -> {
+            List<Product> missingSkuProducts = productRepository.findAll().stream()
+                    .filter(product -> product.getSku() == null || product.getSku().isBlank())
+                    .peek(product -> product.setSku(generateLegacySku(product.getId())))
+                    .toList();
+
+            if (missingSkuProducts.isEmpty()) {
+                return;
+            }
+
+            productRepository.saveAll(missingSkuProducts);
+            log.info("Backfilled SKU for {} legacy products", missingSkuProducts.size());
+        };
+    }
+
+    private static String generateSeedSku(String productId) {
+        return productId.toUpperCase().replaceAll("[^A-Z0-9]+", "-");
+    }
+
+    private static String generateLegacySku(String productId) {
+        return "LEGACY-" + productId.toUpperCase().replaceAll("[^A-Z0-9]+", "-");
     }
 }

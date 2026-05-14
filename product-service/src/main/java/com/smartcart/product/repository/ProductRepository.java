@@ -5,5 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface ProductRepository extends MongoRepository<Product, String> {
 
+    boolean existsBySkuIgnoreCase(String sku);
+
     boolean existsByNameAndBrand(String name, String brand);
 }
